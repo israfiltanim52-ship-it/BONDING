@@ -1,0 +1,12 @@
+BONDING — প্রথম চালুর চেকলিস্ট
+
+১) Firebase Console → bonding-1aab9 → Authentication → Sign-in method → Email/Password Enable → Save
+২) Firestore Database তৈরি করুন (Standard edition)। Scheduled backups নির্বাচন করবেন না।
+৩) Firestore Database → Rules → ZIP-এর firestore.rules ফাইলের সব কোড বসান → Publish
+৪) ZIP extract করে ভেতরের bondhu-chat-main ফোল্ডারের সব ফাইল আপনার hosting-এর root-এ upload করুন।
+৫) Website খুলে দুটি আলাদা email account তৈরি করে login পরীক্ষা করুন।
+৬) একটি account থেকে text post দিন, অন্য account থেকে feed-এ দেখুন। এরপর Chats-এ email দিয়ে অপর account খুঁজে message পাঠান।
+
+এই সংস্করণে text post ও text chat আছে। ছবি/ভিডিও, likes/comments, friend requests, calls, stories, reels, push notification, AI এবং admin dashboard এখনো যোগ হয়নি।
+
+কোনো Firestore permission-denied error হলে Rules publish হয়েছে কি না পরীক্ষা করুন।
