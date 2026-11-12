@@ -392,12 +392,16 @@ async function searchFriend() {
     const result = document.createElement("div");
     result.className = "search-result social-result";
     const identity = document.createElement("div");
-    identity.innerHTML = "";
+    identity.className = "social-identity";
+    const avatar = makeAvatar(userData.name || "বন্ধু", userData.photoURL || "");
+    const textIdentity = document.createElement("div");
+    textIdentity.className = "social-identity-text";
     const title = document.createElement("strong");
     title.textContent = userData.name || "বন্ধু";
     const emailText = document.createElement("small");
     emailText.textContent = userData.email || "";
-    identity.append(title, emailText);
+    textIdentity.append(title, emailText);
+    identity.append(avatar, textIdentity);
     const addButton = document.createElement("button");
     addButton.type = "button";
     addButton.className = "primary-btn";
@@ -733,9 +737,15 @@ function listenToFeed() {
       card.id = `post-${postId}`;
       const head = document.createElement("div");
       head.className = "post-head";
-      const avatar = document.createElement("div");
-      avatar.className = "avatar small";
-      avatar.textContent = (post.authorName || "B").trim().charAt(0).toUpperCase();
+      const avatar = makeAvatar(post.authorName || "B", "");
+      if (post.authorId) {
+        getPublicProfile(post.authorId).then(profile => {
+          if (profile.photoURL && avatar.isConnected) {
+            const hydrated = makeAvatar(post.authorName || profile.name || "B", profile.photoURL);
+            avatar.replaceChildren(...hydrated.childNodes);
+          }
+        }).catch(error => console.warn("Post author photo unavailable:", error));
+      }
       const meta = document.createElement("div");
       meta.className = "post-author";
       const name = document.createElement("strong");
@@ -836,6 +846,43 @@ function safeText(el, value) {
   if (el) el.textContent = value || "";
 }
 
+// Shared avatar renderer: reads the public photoURL saved in users/{uid}.
+const publicProfileCache = new Map();
+function addAvatarImage(avatar, name, photoURL) {
+  if (!avatar) return;
+  avatar.textContent = (name || "B").trim().charAt(0).toUpperCase();
+  if (!photoURL) return;
+  const image = document.createElement("img");
+  image.src = photoURL;
+  image.alt = `${name || "ব্যবহারকারী"}-এর প্রোফাইল ছবি`;
+  image.loading = "lazy";
+  image.referrerPolicy = "no-referrer";
+  image.addEventListener("error", () => image.remove(), { once: true });
+  avatar.replaceChildren(image);
+}
+
+function makeAvatar(name, photoURL = "", className = "avatar small") {
+  const avatar = document.createElement("div");
+  avatar.className = className;
+  addAvatarImage(avatar, name, photoURL);
+  return avatar;
+}
+
+async function getPublicProfile(uid) {
+  if (!uid) return {};
+  if (publicProfileCache.has(uid)) return publicProfileCache.get(uid);
+  const pending = getDoc(doc(db, "users", uid)).then(snap => snap.exists() ? snap.data() : {});
+  publicProfileCache.set(uid, pending);
+  try {
+    const profile = await pending;
+    publicProfileCache.set(uid, profile);
+    return profile;
+  } catch (error) {
+    publicProfileCache.delete(uid);
+    throw error;
+  }
+}
+
 async function uploadBondingImage(file) {
   if (!file) throw new Error("ছবি নির্বাচন করুন।");
   const allowed = ["image/jpeg", "image/png", "image/webp"];
@@ -873,6 +920,7 @@ async function loadMyProfile() {
     photo?.classList.add("hidden"); avatar?.classList.remove("hidden");
     if (avatar) avatar.textContent = (data.name || "B").charAt(0).toUpperCase();
   }
+  ["homeAvatar", "chatAvatar"].forEach(id => addAvatarImage($(id), data.name || "B", data.photoURL || ""));
   const cover = $("profileCover");
   if (cover) {
     cover.style.backgroundImage = data.coverURL
@@ -964,12 +1012,14 @@ async function removeFriend(requestId) {
   } catch (error) { console.error(error); showToast(readableError(error)); }
 }
 
-function makeSocialRow(name, detail, actions = []) {
+function makeSocialRow(name, detail, actions = [], photoURL = "") {
   const row = document.createElement("div"); row.className = "social-row";
-  const info = document.createElement("div");
+  const identity = document.createElement("div"); identity.className = "social-identity";
+  const avatar = makeAvatar(name || "B", photoURL);
+  const info = document.createElement("div"); info.className = "social-identity-text";
   const strong = document.createElement("strong"); strong.textContent = name || "BONDING ব্যবহারকারী";
   const small = document.createElement("small"); small.textContent = detail || "";
-  info.append(strong, small); row.append(info);
+  info.append(strong, small); identity.append(avatar, info); row.append(identity);
   actions.forEach(({label, cls, run}) => {
     const btn = document.createElement("button"); btn.type = "button";
     btn.className = cls || "outline-btn"; btn.textContent = label;
@@ -990,35 +1040,40 @@ async function renderSocialLists() {
   const incomingEl = $("incomingRequests"), outgoingEl = $("outgoingRequests"), friendsEl = $("friendsList");
   [incomingEl, outgoingEl, friendsEl].forEach(el => el?.replaceChildren());
   if (incoming.empty) incomingEl?.append(Object.assign(document.createElement("p"), {className:"muted",textContent:"নতুন কোনো অনুরোধ নেই।"}));
-  incoming.forEach(item => {
+  for (const item of incoming.docs) {
     const d = item.data();
-    incomingEl?.append(makeSocialRow(d.fromName, "বন্ধুত্ব করতে চান", [
+    let profile = {};
+    try { profile = await getPublicProfile(d.fromUid); } catch (error) { console.warn(error); }
+    incomingEl?.append(makeSocialRow(profile.name || d.fromName, "বন্ধুত্ব করতে চান", [
       {label:"গ্রহণ",cls:"primary-btn",run:()=>respondFriendRequest(item.id,true)},
       {label:"বাতিল",cls:"outline-btn",run:()=>respondFriendRequest(item.id,false)}
-    ]));
-  });
+    ], profile.photoURL || ""));
+  }
   if (outgoing.empty) outgoingEl?.append(Object.assign(document.createElement("p"), {className:"muted",textContent:"কোনো পাঠানো অনুরোধ নেই।"}));
-  outgoing.forEach(item => {
+  for (const item of outgoing.docs) {
     const d=item.data();
-    outgoingEl?.append(makeSocialRow(d.toName, "অনুরোধের উত্তর অপেক্ষমাণ", [
+    let profile = {};
+    try { profile = await getPublicProfile(d.toUid); } catch (error) { console.warn(error); }
+    outgoingEl?.append(makeSocialRow(profile.name || d.toName, "অনুরোধের উত্তর অপেক্ষমাণ", [
       {label:"অনুরোধ বাতিল",cls:"outline-btn",run:()=>removeFriend(item.id)}
-    ]));
-  });
+    ], profile.photoURL || ""));
+  }
   const all = [...acceptedFrom.docs, ...acceptedTo.docs];
   if (!all.length) friendsEl?.append(Object.assign(document.createElement("p"), {className:"muted",textContent:"এখনো কোনো বন্ধু নেই।"}));
-  all.forEach(item => {
+  for (const item of all) {
     const d=item.data(), isFrom=d.fromUid===uid;
     const friendUid=isFrom?d.toUid:d.fromUid;
     const friendName=isFrom?d.toName:d.fromName;
-    friendsEl?.append(makeSocialRow(friendName, "BONDING বন্ধু", [
+    let profile = {};
+    try { profile = await getPublicProfile(friendUid); } catch (error) { console.warn(error); }
+    friendsEl?.append(makeSocialRow(profile.name || friendName, "BONDING বন্ধু", [
       {label:"চ্যাট",cls:"primary-btn",run:async()=>{
-        const userSnap=await getDoc(doc(db,"users",friendUid));
-        const u=userSnap.exists()?userSnap.data():{};
+        const u = await getPublicProfile(friendUid);
         openConversation({uid:friendUid,name:u.name||friendName,email:u.email||""});
       }},
       {label:"বন্ধু সরান",cls:"outline-btn",run:()=>removeFriend(item.id)}
-    ]));
-  });
+    ], profile.photoURL || ""));
+  }
 }
 
 async function applyForVerification() {

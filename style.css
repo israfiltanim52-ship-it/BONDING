@@ -412,3 +412,28 @@ body{background:radial-gradient(ellipse at 90% -10%,rgba(180,210,255,.34),transp
   .social-row,.social-result { align-items:flex-start; }
   .social-row button,.social-result button { flex:1 1 auto; }
 }
+
+/* v0.3.1: show Cloudinary profile photos in search, friends and feed avatars */
+.avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.social-identity {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1 1 180px;
+}
+.social-identity-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.social-identity-text strong,
+.social-identity-text small {
+  overflow-wrap: anywhere;
+}
