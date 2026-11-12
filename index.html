@@ -140,16 +140,13 @@
         </div>
       </section>
 
-      <!-- CHATS -->
-      <section id="chatsPage" class="page">
+      <!-- FRIENDS -->
+      <section id="friendsPage" class="page">
         <div class="page-heading">
-          <div>
-            <p class="eyebrow">YOUR CONVERSATIONS</p>
-            <h2 data-i18n="chats">চ্যাট</h2>
-          </div>
-          <div class="avatar small" id="chatAvatar">B</div>
+          <div><p class="eyebrow">YOUR COMMUNITY</p><h2>বন্ধু</h2></div>
+          <div class="round-icon">♧</div>
         </div>
-
+        <p class="muted friends-intro">BONDING-এ থাকা মানুষদের খুঁজুন, বন্ধুত্বের অনুরোধ পাঠান এবং বন্ধুদের সঙ্গে যুক্ত থাকুন।</p>
         <div class="search-wrap">
           <span>⌕</span>
           <input id="userSearch" type="search"
@@ -174,6 +171,18 @@
           <div class="section-heading"><h3>আমার বন্ধুরা</h3></div>
           <div id="friendsList" class="social-list"><p class="muted">বন্ধুর তালিকা লোড হচ্ছে…</p></div>
         </section>
+
+      </section>
+
+      <!-- CHATS -->
+      <section id="chatsPage" class="page">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">YOUR CONVERSATIONS</p>
+            <h2 data-i18n="chats">চ্যাট</h2>
+          </div>
+          <div class="avatar small" id="chatAvatar">B</div>
+        </div>
 
         <div class="section-heading">
           <h3 data-i18n="yourChats">আপনার চ্যাট</h3>
@@ -289,6 +298,28 @@
           </form>
         </section>
 
+        <p class="tiny-note center">
+          BONDING • <span data-i18n="madeForFriends">
+            বন্ধুদের জন্য তৈরি
+          </span>
+        </p>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="settingsPage" class="page">
+        <div class="page-heading"><div><p class="eyebrow">YOUR PREFERENCES</p><h2>সেটিংস</h2></div><div class="round-icon">⚙</div></div>
+        <section class="panel theme-panel">
+          <div class="section-heading"><h3>রঙের থিম</h3><span class="pill">6 COLORS</span></div>
+          <p class="muted">আপনার পছন্দের রং বেছে নিন।</p>
+          <div class="theme-grid">
+            <button class="theme-choice" data-color-theme="blue" type="button"><i style="--swatch:#1877f2"></i>Ocean Blue</button>
+            <button class="theme-choice" data-color-theme="green" type="button"><i style="--swatch:#15966a"></i>Emerald</button>
+            <button class="theme-choice" data-color-theme="purple" type="button"><i style="--swatch:#7653d6"></i>Royal Purple</button>
+            <button class="theme-choice" data-color-theme="rose" type="button"><i style="--swatch:#d94f82"></i>Rose</button>
+            <button class="theme-choice" data-color-theme="sunset" type="button"><i style="--swatch:#e58a36"></i>Sunset</button>
+            <button class="theme-choice" data-color-theme="midnight" type="button"><i style="--swatch:#586a9c"></i>Midnight</button>
+          </div>
+        </section>
         <section class="panel verification-panel">
           <div class="section-heading"><h3>অ্যাকাউন্ট ভেরিফিকেশন</h3><span class="pill">VERIFICATION</span></div>
           <p class="muted">ভেরিফিকেশন আবেদন জমা দিন। যাচাই শেষে অ্যাডমিন অনুমোদন দিলে প্রোফাইলে ব্যাজ দেখা যাবে।</p>
@@ -325,30 +356,28 @@
           </div>
         </div>
 
-        <p class="tiny-note center">
-          BONDING • <span data-i18n="madeForFriends">
-            বন্ধুদের জন্য তৈরি
-          </span>
-        </p>
+        <section class="panel developer-card">
+          <div class="section-heading"><h3>BONDING সম্পর্কে</h3><span class="pill">ABOUT</span></div>
+          <div class="developer-row"><div class="developer-avatar">IT</div><div><strong>ইস্রাফিল তানিম</strong><p>প্রতিষ্ঠাতা ও অ্যাপ নির্মাতা</p><small>Where Hearts Connect. ❤️</small></div></div>
+          <p class="muted">BONDING — হৃদয়ের বন্ধন। মানুষের সঙ্গে মানুষের সুন্দর যোগাযোগ গড়ে তোলার একটি উদ্যোগ।</p>
+        </section>
       </section>
 
       <!-- BOTTOM NAVIGATION -->
       <nav id="bottomNav" class="bottom-nav" aria-label="প্রধান নেভিগেশন">
-        <button type="button" class="nav-item active" data-go="homePage" data-page="homePage" aria-label="হোম">
-          <span>⌂</span><small data-i18n="home">হোম</small>
-        </button>
-        <button type="button" class="nav-item" data-go="chatsPage" data-page="chatsPage" aria-label="চ্যাট">
-          <span>▤</span><small data-i18n="chats">চ্যাট</small>
-        </button>
-
-        <button type="button" class="nav-item" data-go="profilePage" data-page="profilePage" aria-label="প্রোফাইল">
-          <span>●</span><small data-i18n="profile">প্রোফাইল</small>
-        </button>
+        <button type="button" class="nav-item active" data-page="homePage" aria-label="হোম"><span>⌂</span><small>হোম</small></button>
+        <button type="button" class="nav-item" data-page="friendsPage" aria-label="বন্ধু"><span>♧</span><small>বন্ধু</small></button>
+        <button type="button" class="nav-item" data-page="chatsPage" aria-label="চ্যাট"><span>▤</span><small>চ্যাট</small></button>
+        <button type="button" class="nav-item" data-page="settingsPage" aria-label="সেটিংস"><span>⚙</span><small>সেটিংস</small></button>
+        <button type="button" class="nav-item" data-page="profilePage" aria-label="প্রোফাইল"><span>●</span><small>প্রোফাইল</small></button>
       </nav>
 
     </section>
   </main>
 </div>
+
+<button id="tanimAiButton" class="tanim-ai-fab" type="button" aria-label="Tanim AI খুলুন"><span>✦</span><small>Tanim AI</small></button>
+<div id="tanimAiPanel" class="tanim-ai-panel hidden" role="dialog" aria-label="Tanim AI"><div class="ai-panel-head"><strong>✦ Tanim AI</strong><button id="closeTanimAi" type="button" aria-label="বন্ধ করুন">×</button></div><p>আমি Tanim AI। AI কথোপকথন পরবর্তী ধাপে সংযুক্ত করা হবে।</p><div class="ai-coming">AI সহকারী প্রস্তুত করা হচ্ছে</div></div>
 
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 

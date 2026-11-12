@@ -1179,6 +1179,26 @@ document.querySelectorAll("[data-page]").forEach(button => {
   button.addEventListener("click", () => openPage(button.dataset.page));
 });
 
+
+// BONDING v0.4: six accent palettes and floating Tanim AI entry point.
+const savedColorTheme = localStorage.getItem("bonding-color-theme") || "blue";
+function applyColorTheme(name) {
+  const allowed = ["blue", "green", "purple", "rose", "sunset", "midnight"];
+  const chosen = allowed.includes(name) ? name : "blue";
+  document.documentElement.dataset.colorTheme = chosen;
+  document.body.dataset.colorTheme = chosen;
+  localStorage.setItem("bonding-color-theme", chosen);
+  document.querySelectorAll("[data-color-theme]").forEach(button => {
+    button.classList.toggle("selected", button.dataset.colorTheme === chosen);
+  });
+}
+document.querySelectorAll("[data-color-theme]").forEach(button => {
+  button.addEventListener("click", () => applyColorTheme(button.dataset.colorTheme));
+});
+applyColorTheme(savedColorTheme);
+$("tanimAiButton")?.addEventListener("click", () => $("tanimAiPanel")?.classList.toggle("hidden"));
+$("closeTanimAi")?.addEventListener("click", () => $("tanimAiPanel")?.classList.add("hidden"));
+
 /* Restore settings */
 applyLanguage();
 applyTheme();
