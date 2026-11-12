@@ -1,2 +1,5 @@
-BONDING v0.3 UPDATED BUILD
-Extract the ZIP and upload/replace all files inside BONDING-main at the GitHub repository root. Publish firestore.rules in Firebase Console before testing. See README-BN.md and SETUP-BN.txt.
+BONDING v0.5 — searchable member directory update
+
+Extract the ZIP and upload/replace the files inside BONDING-main at the GitHub repository root. Do not upload the outer folder as a nested directory. Existing Firebase accounts and Firestore data are not deleted by this update.
+Firebase project/config and Cloudinary settings are retained. AI backend, media messaging, online/seen indicators, and voice/video calls are not implemented in this build.
+See README-BN.md for details.

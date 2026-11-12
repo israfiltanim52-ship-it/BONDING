@@ -158,6 +158,11 @@
 
         <p id="searchMessage" class="status-message"></p>
         <div id="searchResults" class="search-results"></div>
+        <section class="panel directory-panel">
+          <div class="section-heading"><div><h3>সব ব্যবহারকারী</h3><p class="muted">BONDING-এ নিবন্ধিত অ্যাকাউন্টগুলো এখানে দেখুন।</p></div><button id="refreshFriendsDirectory" class="outline-btn" type="button">রিফ্রেশ</button></div>
+          <input id="friendsDirectorySearch" class="directory-search" type="search" placeholder="নাম বা ইমেইল দিয়ে খুঁজুন">
+          <div id="friendsDirectory" class="social-list directory-list"><p class="muted">ব্যবহারকারী তালিকা লোড হচ্ছে…</p></div>
+        </section>
 
         <section class="panel social-panel">
           <div class="section-heading"><h3>বন্ধুত্বের অনুরোধ</h3></div>
@@ -193,6 +198,11 @@
             এখনো কোনো চ্যাট নেই।
           </div>
         </div>
+        <section class="panel directory-panel chat-directory-panel">
+          <div class="section-heading"><div><h3>নতুন চ্যাট শুরু করুন</h3><p class="muted">সব নিবন্ধিত ব্যবহারকারীর মধ্যে খুঁজুন।</p></div><button id="refreshChatsDirectory" class="outline-btn" type="button">রিফ্রেশ</button></div>
+          <input id="chatsDirectorySearch" class="directory-search" type="search" placeholder="নাম বা ইমেইল দিয়ে খুঁজুন">
+          <div id="chatsDirectory" class="social-list directory-list"><p class="muted">ব্যবহারকারী তালিকা লোড হচ্ছে…</p></div>
+        </section>
       </section>
 
       <!-- CONVERSATION -->
@@ -377,7 +387,14 @@
 </div>
 
 <button id="tanimAiButton" class="tanim-ai-fab" type="button" aria-label="Tanim AI খুলুন"><span class="ai-spark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2Z"/><path d="m19 16 .8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z"/></svg></span><small>Tanim AI</small></button>
-<div id="tanimAiPanel" class="tanim-ai-panel hidden" role="dialog" aria-label="Tanim AI"><div class="ai-panel-head"><strong>Tanim AI</strong><button id="closeTanimAi" type="button" aria-label="বন্ধ করুন">×</button></div><p>আমি Tanim AI। AI কথোপকথন পরবর্তী ধাপে সংযুক্ত করা হবে।</p><div class="ai-coming">AI সহকারী প্রস্তুত করা হচ্ছে</div></div>
+<div id="tanimAiPanel" class="tanim-ai-panel hidden" role="dialog" aria-label="Tanim AI">
+  <div class="ai-panel-head"><div><strong>Tanim AI</strong><small>আপনার ডিজিটাল সহকারী</small></div><button id="closeTanimAi" type="button" aria-label="বন্ধ করুন">×</button></div>
+  <div class="ai-mode-grid">
+    <article class="ai-mode-card"><span class="ai-mode-icon">✦</span><strong>BONDING Project Assistant</strong><p>অ্যাপ ব্যবহার, বন্ধু খোঁজা, প্রোফাইল ও চ্যাট সংক্রান্ত নির্দেশনা।</p></article>
+    <article class="ai-mode-card"><span class="ai-mode-icon">✧</span><strong>Tanim AI Personal Assistant</strong><p>প্রশ্নোত্তর, লেখা, কবিতা, গল্প, ধারণা ও দৈনন্দিন সহায়তা।</p></article>
+  </div>
+  <div class="ai-coming"><strong>AI সংযোগ প্রস্তুত করা বাকি</strong><span>নিরাপদ সার্ভার-সাইড AI সংযোগ যুক্ত না হওয়া পর্যন্ত এখানে স্বয়ংক্রিয় AI উত্তর আসবে না।</span></div>
+</div>
 
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 

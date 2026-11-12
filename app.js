@@ -1125,6 +1125,82 @@ async function renderSocialLists() {
   }
 }
 
+
+// BONDING v0.5: searchable directory of registered accounts for Friends and Chat.
+let directoryUsersCache = [];
+let directoryCacheLoadedAt = 0;
+
+async function getDirectoryUsers(forceRefresh = false) {
+  if (!state.user) return [];
+  const fresh = Date.now() - directoryCacheLoadedAt < 45000;
+  if (!forceRefresh && fresh && directoryUsersCache.length) return directoryUsersCache;
+  const snap = await getDocs(collection(db, "users"));
+  directoryUsersCache = snap.docs
+    .filter(item => item.id !== state.user.uid)
+    .map(item => ({ uid: item.id, ...item.data() }));
+  directoryCacheLoadedAt = Date.now();
+  return directoryUsersCache;
+}
+
+async function renderUserDirectory(containerId, searchValue = "", forceRefresh = false) {
+  const container = $(containerId);
+  if (!container || !state.user) return;
+  container.replaceChildren();
+  const loading = document.createElement("p");
+  loading.className = "muted";
+  loading.textContent = "ব্যবহারকারী তালিকা লোড হচ্ছে…";
+  container.append(loading);
+  try {
+    const users = await getDirectoryUsers(forceRefresh);
+    const term = searchValue.trim().toLocaleLowerCase();
+    const filtered = users.filter(user => {
+      const name = (user.name || "").toLocaleLowerCase();
+      const email = (user.email || "").toLocaleLowerCase();
+      return !term || name.includes(term) || email.includes(term);
+    }).sort((a,b) => (a.name || a.email || "").localeCompare(b.name || b.email || ""));
+    container.replaceChildren();
+    if (!filtered.length) {
+      const empty = document.createElement("p");
+      empty.className = "muted";
+      empty.textContent = term ? "এই নামে বা ইমেইলে কোনো অ্যাকাউন্ট পাওয়া যায়নি।" : "এখনো অন্য কোনো নিবন্ধিত অ্যাকাউন্ট পাওয়া যায়নি।";
+      container.append(empty);
+      return;
+    }
+
+    const [sentSnap, receivedSnap] = await Promise.all([
+      getDocs(query(collection(db, "friendRequests"), where("fromUid", "==", state.user.uid))),
+      getDocs(query(collection(db, "friendRequests"), where("toUid", "==", state.user.uid)))
+    ]);
+    const relation = new Map();
+    sentSnap.docs.forEach(d => relation.set(d.data().toUid, { id:d.id, status:d.data().status, direction:"out" }));
+    receivedSnap.docs.forEach(d => relation.set(d.data().fromUid, { id:d.id, status:d.data().status, direction:"in" }));
+
+    filtered.forEach(user => {
+      const rel = relation.get(user.uid);
+      const actions = [];
+      if (rel?.status === "accepted") {
+        actions.push({label:"বন্ধু",cls:"outline-btn",run:()=>showToast("আপনি ইতিমধ্যে বন্ধু।")});
+        actions.push({label:"চ্যাট",cls:"primary-btn",run:()=>openConversation({uid:user.uid,name:user.name||"বন্ধু",email:user.email||""})});
+      } else if (rel?.status === "pending" && rel.direction === "out") {
+        actions.push({label:"অনুরোধ পাঠানো হয়েছে",cls:"outline-btn",run:()=>showToast("উত্তরের অপেক্ষায় আছে।")});
+      } else if (rel?.status === "pending" && rel.direction === "in") {
+        actions.push({label:"অনুরোধ গ্রহণ",cls:"primary-btn",run:async()=>{await respondFriendRequest(rel.id,true);await renderSocialLists();await renderUserDirectory(containerId,$(containerId==="friendsDirectory"?"friendsDirectorySearch":"chatsDirectorySearch")?.value||"",true);}});
+      } else {
+        actions.push({label:"বন্ধু যোগ করুন",cls:"primary-btn",run:async()=>{await sendFriendRequest(user.uid,user);await renderUserDirectory(containerId,$(containerId==="friendsDirectory"?"friendsDirectorySearch":"chatsDirectorySearch")?.value||"",true);}});
+      }
+      actions.push({label:"প্রোফাইল",cls:"outline-btn",run:()=>showToast(`${user.name||"ব্যবহারকারী"} — ${user.bio||"BONDING সদস্য"}`)});
+      container.append(makeSocialRow(user.name || user.email || "BONDING সদস্য", user.email || "নিবন্ধিত ব্যবহারকারী", actions, user.photoURL || ""));
+    });
+  } catch (error) {
+    console.error("User directory error:", error);
+    container.replaceChildren();
+    const warning = document.createElement("p");
+    warning.className = "muted";
+    warning.textContent = "ব্যবহারকারী তালিকা লোড করা যায়নি। Firebase Firestore Rules-এ লগইন করা ব্যবহারকারীর users collection পড়ার অনুমতি আছে কি না দেখুন।";
+    container.append(warning);
+  }
+}
+
 async function applyForVerification() {
   if (!state.user) return;
   try {
@@ -1189,6 +1265,10 @@ function toggleTheme() {
 }
 
 $("searchBtn")?.addEventListener("click", searchFriend);
+$("friendsDirectorySearch")?.addEventListener("input", event => renderUserDirectory("friendsDirectory", event.target.value));
+$("chatsDirectorySearch")?.addEventListener("input", event => renderUserDirectory("chatsDirectory", event.target.value));
+$("refreshFriendsDirectory")?.addEventListener("click", () => renderUserDirectory("friendsDirectory", $("friendsDirectorySearch")?.value || "", true));
+$("refreshChatsDirectory")?.addEventListener("click", () => renderUserDirectory("chatsDirectory", $("chatsDirectorySearch")?.value || "", true));
 $("profileForm")?.addEventListener("submit", saveProfile);
 $("avatarFile")?.addEventListener("change", () => handleImageChange("avatarFile", "photoURL", "প্রোফাইল ছবি আপডেট হয়েছে।"));
 $("coverFile")?.addEventListener("change", () => handleImageChange("coverFile", "coverURL", "কভার ছবি আপডেট হয়েছে।"));
@@ -1283,6 +1363,8 @@ onAuthStateChanged(auth, async user => {
     });
     listenToChats(user);
     listenToFeed();
+    renderUserDirectory("friendsDirectory");
+    renderUserDirectory("chatsDirectory");
     openPage("homePage");
   } catch (error) {
     console.error("User profile initialization error:", error);

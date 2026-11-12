@@ -1,25 +1,11 @@
-BONDING v0.3 — আপডেট ইনস্টল নির্দেশনা
+BONDING v0.5 — আপডেট ইনস্টল নির্দেশনা
 
 ১) ZIP Extract করুন।
-২) BONDING-main ফোল্ডারের ভেতরের সব ফাইল GitHub repository root-এ upload/replace করুন।
-৩) Firebase Console → bonding-1aab9 → Firestore Database → Rules খুলুন।
-৪) ZIP-এর firestore.rules ফাইলের সম্পূর্ণ কোড বসিয়ে Publish চাপুন।
-৫) GitHub Pages/hosting deploy শেষ হলে ওয়েবসাইটে Ctrl + Shift + R চাপুন।
-৬) দুইটি আলাদা test account দিয়ে পরীক্ষা করুন:
-   - Profile → নাম/Bio সম্পাদনা
-   - Profile photo ও cover photo upload
-   - Chats → ইমেইল দিয়ে user search → friend request
-   - অন্য account-এ login করে request accept
-   - Friends list, chat, remove friend
-   - Verification application
+২) BONDING-main ফোল্ডারের ভেতরের সব ফাইল GitHub repository root-এ upload/replace করুন; nested BONDING-main ফোল্ডার তৈরি করবেন না।
+৩) Commit changes দিন এবং hosting deploy শেষ হওয়া পর্যন্ত অপেক্ষা করুন।
+৪) ওয়েবসাইটে Ctrl + Shift + R চাপুন।
+৫) দুইটি আলাদা test account দিয়ে Friends ও Chat পেজে সব ব্যবহারকারী খোঁজা, friend request এবং নতুন chat পরীক্ষা করুন।
 
-Cloudinary config:
-Cloud name: y6ujmcob
-Upload preset: bonding_upload
-Signing mode: Unsigned
-
-সতর্কতা:
-- API Secret, Private Key বা Firebase Service Account JSON frontend-এ দেবেন না।
-- Firebase Storage/Blaze plan চালু করার দরকার নেই।
-- Verified badge কেবল অ্যাডমিন Firebase Console-এ users/{UID}.verified = true করলে দেখাবে।
-- Audio/video calls এখনো placeholder।
+এই build-এ Firebase project/config এবং Cloudinary configuration অপরিবর্তিত রাখা হয়েছে। Firestore/Storage data মুছে ফেলা হয় না।
+নোট: Firestore Rules-এ signed-in user-কে users collection read করার অনুমতি থাকতে হবে। AI backend, ছবি/ফাইল chat attachment, online/seen indicator ও voice/video call এখনো সম্পূর্ণ নয়।
+Cloudinary: cloud name y6ujmcob; unsigned preset bonding_upload. API Secret/Private Key frontend-এ দেবেন না।

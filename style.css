@@ -508,3 +508,32 @@ body[data-theme="dark"] .theme-choice{background:var(--surface);color:var(--text
   .tanim-ai-panel{right:12px;bottom:calc(36vh + 62px)}
   .chat-item-v2{min-height:68px}
 }
+
+
+/* BONDING v0.5 directory and assistant refinements */
+.directory-panel{margin-top:18px;padding:18px}
+.directory-panel .section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.directory-panel .section-heading h3{margin:0 0 4px}
+.directory-search{width:100%;margin:10px 0 14px;padding:13px 15px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text)}
+.directory-list{display:grid;gap:10px}
+.directory-list .social-row,.directory-list .search-result{border:1px solid var(--line);border-radius:16px;padding:12px;background:var(--surface)}
+.directory-list .social-actions{display:flex;flex-wrap:wrap;gap:7px}
+.directory-list .social-actions button{font-size:12px;padding:8px 11px}
+.chat-directory-panel{margin-bottom:20px}
+.tanim-ai-fab{bottom:calc(88px + env(safe-area-inset-bottom, 0px))!important;right:18px!important;z-index:35}
+.tanim-ai-panel{bottom:calc(145px + env(safe-area-inset-bottom, 0px))!important;right:14px!important;max-height:min(70vh,560px);overflow:auto;z-index:36}
+.ai-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ai-panel-head small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.ai-mode-grid{display:grid;gap:10px;margin:14px 0}
+.ai-mode-card{padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+.ai-mode-card strong{display:block;font-size:13px;margin:5px 0}
+.ai-mode-card p{font-size:12px;color:var(--muted);margin:0;line-height:1.55}
+.ai-mode-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:var(--green-soft);color:var(--green);font-weight:800}
+.ai-coming{display:grid;gap:5px;padding:12px;border-radius:13px;background:var(--surface-2);font-size:12px;color:var(--muted);line-height:1.5}
+.ai-coming strong{color:var(--text)}
+@media(max-width:520px){
+ .directory-panel{padding:14px}
+ .directory-list .social-actions{width:100%}
+ .directory-list .social-actions button{flex:1 1 auto}
+ .tanim-ai-panel{left:12px!important;right:12px!important;width:auto!important}
+}
