@@ -1,4 +1,4 @@
-const CACHE_NAME = "bonding-shell-v040";
+const CACHE_NAME = "bonding-shell-v041";
 const APP_SHELL = ["./", "./index.html", "./style.css", "./manifest.json"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).catch(() => {}));

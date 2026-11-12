@@ -365,19 +365,19 @@
 
       <!-- BOTTOM NAVIGATION -->
       <nav id="bottomNav" class="bottom-nav" aria-label="প্রধান নেভিগেশন">
-        <button type="button" class="nav-item active" data-page="homePage" aria-label="হোম"><span>⌂</span><small>হোম</small></button>
-        <button type="button" class="nav-item" data-page="friendsPage" aria-label="বন্ধু"><span>♧</span><small>বন্ধু</small></button>
-        <button type="button" class="nav-item" data-page="chatsPage" aria-label="চ্যাট"><span>▤</span><small>চ্যাট</small></button>
-        <button type="button" class="nav-item" data-page="settingsPage" aria-label="সেটিংস"><span>⚙</span><small>সেটিংস</small></button>
-        <button type="button" class="nav-item" data-page="profilePage" aria-label="প্রোফাইল"><span>●</span><small>প্রোফাইল</small></button>
+        <button type="button" class="nav-item active" data-page="homePage" aria-label="হোম" aria-current="page"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span><small>হোম</small></button>
+        <button type="button" class="nav-item" data-page="friendsPage" aria-label="বন্ধু"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6m3-3h-6"/></svg></span><small>বন্ধু</small></button>
+        <button type="button" class="nav-item" data-page="chatsPage" aria-label="চ্যাট"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z"/></svg></span><small>চ্যাট</small></button>
+        <button type="button" class="nav-item" data-page="settingsPage" aria-label="সেটিংস"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.5.9l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.5-.9l-1.7.7-1.4-2.4 1.4-1.1a8 8 0 0 1 0-1.8l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 1.5-.9l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.5.9l1.7-.7 1.4 2.4-1.4 1.1a8 8 0 0 1 0 1.7Z"/></svg></span><small>সেটিংস</small></button>
+        <button type="button" class="nav-item" data-page="profilePage" aria-label="প্রোফাইল"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><small>প্রোফাইল</small></button>
       </nav>
 
     </section>
   </main>
 </div>
 
-<button id="tanimAiButton" class="tanim-ai-fab" type="button" aria-label="Tanim AI খুলুন"><span>✦</span><small>Tanim AI</small></button>
-<div id="tanimAiPanel" class="tanim-ai-panel hidden" role="dialog" aria-label="Tanim AI"><div class="ai-panel-head"><strong>✦ Tanim AI</strong><button id="closeTanimAi" type="button" aria-label="বন্ধ করুন">×</button></div><p>আমি Tanim AI। AI কথোপকথন পরবর্তী ধাপে সংযুক্ত করা হবে।</p><div class="ai-coming">AI সহকারী প্রস্তুত করা হচ্ছে</div></div>
+<button id="tanimAiButton" class="tanim-ai-fab" type="button" aria-label="Tanim AI খুলুন"><span class="ai-spark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2Z"/><path d="m19 16 .8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z"/></svg></span><small>Tanim AI</small></button>
+<div id="tanimAiPanel" class="tanim-ai-panel hidden" role="dialog" aria-label="Tanim AI"><div class="ai-panel-head"><strong>Tanim AI</strong><button id="closeTanimAi" type="button" aria-label="বন্ধ করুন">×</button></div><p>আমি Tanim AI। AI কথোপকথন পরবর্তী ধাপে সংযুক্ত করা হবে।</p><div class="ai-coming">AI সহকারী প্রস্তুত করা হচ্ছে</div></div>
 
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 

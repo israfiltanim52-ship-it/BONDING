@@ -545,52 +545,91 @@ function listenToChats(user) {
 
   state.unsubscribeChats = onSnapshot(chatsQuery, async snapshot => {
     const lists = [$("chatList"), $("homeRecent")].filter(Boolean);
-
     for (const list of lists) list.replaceChildren();
 
-    if (snapshot.empty) {
-      lists.forEach(list => {
-        const empty = document.createElement("div");
-        empty.className = "empty-state";
-        empty.textContent = t("noChats");
-        list.append(empty);
+    try {
+      // Include every accepted friend, even before the first message is sent.
+      const [sent, received] = await Promise.all([
+        getDocs(query(collection(db, "friendRequests"), where("fromUid", "==", user.uid))),
+        getDocs(query(collection(db, "friendRequests"), where("toUid", "==", user.uid)))
+      ]);
+      const peers = new Map();
+
+      for (const request of [...sent.docs, ...received.docs]) {
+        const data = request.data();
+        if (data.status !== "accepted") continue;
+        const peerUid = data.fromUid === user.uid ? data.toUid : data.fromUid;
+        if (!peerUid || peerUid === user.uid) continue;
+        peers.set(peerUid, { uid: peerUid, fallbackName: data.fromUid === user.uid ? data.toName : data.fromName });
+      }
+
+      // Chat documents add last-message details; friend requests supply the full friend list.
+      for (const chatDoc of snapshot.docs) {
+        const data = chatDoc.data();
+        const peerUid = (data.members || []).find(uid => uid !== user.uid);
+        if (!peerUid) continue;
+        const existing = peers.get(peerUid) || { uid: peerUid };
+        peers.set(peerUid, { ...existing, lastMessage: data.lastMessage || "", updatedAt: data.updatedAt || null });
+      }
+
+      const rows = await Promise.all([...peers.values()].map(async peer => {
+        const profile = await getPublicProfile(peer.uid).catch(() => ({}));
+        return {
+          uid: peer.uid,
+          name: profile.name || peer.fallbackName || profile.email || "বন্ধু",
+          email: profile.email || "",
+          photoURL: profile.photoURL || "",
+          lastMessage: peer.lastMessage || "এখনো কোনো মেসেজ নেই",
+          updatedAt: peer.updatedAt
+        };
+      }));
+      rows.sort((a, b) => {
+        const ta = a.updatedAt?.toMillis ? a.updatedAt.toMillis() : 0;
+        const tb = b.updatedAt?.toMillis ? b.updatedAt.toMillis() : 0;
+        return tb - ta || a.name.localeCompare(b.name);
       });
-      return;
+
+      if (!rows.length) {
+        lists.forEach(list => {
+          const empty = document.createElement("div");
+          empty.className = "empty-state";
+          empty.textContent = "বন্ধু যোগ হলে এখানে দেখা যাবে। বন্ধু বিভাগ থেকে বন্ধু খুঁজুন।";
+          list.append(empty);
+        });
+        return;
+      }
+
+      rows.forEach(peer => {
+        lists.forEach(list => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "chat-item chat-item-v2";
+          const avatar = makeAvatar(peer.name, peer.photoURL, "avatar small chat-list-avatar");
+          const details = document.createElement("span");
+          details.className = "chat-item-details";
+          const name = document.createElement("strong");
+          name.textContent = peer.name;
+          const last = document.createElement("small");
+          last.textContent = peer.lastMessage;
+          details.append(name, last);
+          const arrow = document.createElement("span");
+          arrow.className = "chat-open-icon";
+          arrow.setAttribute("aria-hidden", "true");
+          arrow.innerHTML = '<svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>';
+          button.append(avatar, details, arrow);
+          button.addEventListener("click", () => openConversation(peer));
+          list.append(button);
+        });
+      });
+    } catch (error) {
+      console.error("Friend chat list error:", error);
+      lists.forEach(list => {
+        const warning = document.createElement("div");
+        warning.className = "empty-state";
+        warning.textContent = "বন্ধুদের চ্যাট তালিকা লোড করা যায়নি। Firestore Rules পরীক্ষা করুন।";
+        list.append(warning);
+      });
     }
-
-    const rows = await Promise.all(snapshot.docs.map(async item => {
-      const data = item.data();
-      const peerUid = (data.members || []).find(uid => uid !== user.uid);
-      if (!peerUid) return null;
-
-      const peerSnapshot = await getDoc(doc(db, "users", peerUid));
-      const peerData = peerSnapshot.exists() ? peerSnapshot.data() : {};
-
-      return {
-        uid: peerUid,
-        name: peerData.name || peerData.email || "বন্ধু",
-        email: peerData.email || "",
-        lastMessage: data.lastMessage || ""
-      };
-    }));
-
-    rows.filter(Boolean).forEach(peer => {
-      lists.forEach(list => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "chat-item";
-
-        const name = document.createElement("strong");
-        name.textContent = peer.name;
-
-        const last = document.createElement("small");
-        last.textContent = peer.lastMessage || peer.email;
-
-        button.append(name, last);
-        button.addEventListener("click", () => openConversation(peer));
-        list.append(button);
-      });
-    });
   }, error => {
     console.error("Chat list error:", error);
     showToast(readableError(error));
@@ -997,8 +1036,18 @@ async function sendFriendRequest(targetUid, targetData) {
 async function respondFriendRequest(requestId, accept) {
   try {
     const ref = doc(db, "friendRequests", requestId);
+    const requestSnap = await getDoc(ref);
+    if (!requestSnap.exists()) throw new Error("অনুরোধটি আর পাওয়া যাচ্ছে না।");
+    const requestData = requestSnap.data();
     await setDoc(ref, { status: accept ? "accepted" : "rejected", respondedAt: serverTimestamp() }, { merge: true });
-    showToast(accept ? "বন্ধুত্ব গ্রহণ করা হয়েছে।" : "অনুরোধ প্রত্যাখ্যান করা হয়েছে।");
+    if (accept) {
+      const members = [requestData.fromUid, requestData.toUid].sort();
+      // Create the empty conversation immediately so both friends see each other in Chats.
+      await setDoc(doc(db, "chats", chatIdFor(members[0], members[1])), {
+        members, updatedAt: serverTimestamp()
+      }, { merge: true });
+    }
+    showToast(accept ? "বন্ধুত্ব গ্রহণ করা হয়েছে। এখন চ্যাট তালিকায় পাবেন।" : "অনুরোধ প্রত্যাখ্যান করা হয়েছে।");
     await renderSocialLists();
   } catch (error) { console.error(error); showToast(readableError(error)); }
 }
@@ -1185,15 +1234,18 @@ const savedColorTheme = localStorage.getItem("bonding-color-theme") || "blue";
 function applyColorTheme(name) {
   const allowed = ["blue", "green", "purple", "rose", "sunset", "midnight"];
   const chosen = allowed.includes(name) ? name : "blue";
-  document.documentElement.dataset.colorTheme = chosen;
-  document.body.dataset.colorTheme = chosen;
+  document.documentElement.setAttribute("data-color-theme", chosen);
+  document.body.setAttribute("data-color-theme", chosen);
   localStorage.setItem("bonding-color-theme", chosen);
-  document.querySelectorAll("[data-color-theme]").forEach(button => {
-    button.classList.toggle("selected", button.dataset.colorTheme === chosen);
+  document.querySelectorAll(".theme-choice[data-color-theme]").forEach(button => {
+    const selected = button.dataset.colorTheme === chosen;
+    button.classList.toggle("selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
   });
 }
-document.querySelectorAll("[data-color-theme]").forEach(button => {
-  button.addEventListener("click", () => applyColorTheme(button.dataset.colorTheme));
+document.addEventListener("click", event => {
+  const choice = event.target.closest(".theme-choice[data-color-theme]");
+  if (choice) applyColorTheme(choice.dataset.colorTheme);
 });
 applyColorTheme(savedColorTheme);
 $("tanimAiButton")?.addEventListener("click", () => $("tanimAiPanel")?.classList.toggle("hidden"));
