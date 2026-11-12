@@ -382,3 +382,33 @@ body{background:radial-gradient(ellipse at 90% -10%,rgba(180,210,255,.34),transp
 .comment-form{display:flex;gap:8px;margin-top:10px}
 .comment-form input{min-width:0;flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface-2);color:var(--text)}
 .comment-form .primary-btn{padding:9px 13px}
+
+
+/* BONDING v0.3 profile and friendship */
+.profile-cover {
+  position: relative; min-height: 170px; border-radius: 22px 22px 0 0;
+  background: linear-gradient(135deg,#dceaff,#b8d3fa 55%,#edf5ff);
+  background-size: cover; background-position: center; overflow: hidden;
+}
+.cover-actions { position:absolute; right:14px; bottom:14px; }
+.upload-label { cursor:pointer; display:inline-flex; align-items:center; }
+.profile-card-v3 { margin-top:0; border-radius:0 0 22px 22px; padding-top:8px; }
+.profile-photo-wrap { position:relative; display:inline-flex; width:104px; height:104px; margin-top:-56px; border-radius:50%; border:5px solid var(--surface,#fff); cursor:pointer; background:#eaf2ff; align-items:center; justify-content:center; }
+.profile-photo { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.photo-edit-mark { position:absolute; right:0; bottom:0; background:#1877f2; color:white; border-radius:50%; width:28px; height:28px; display:grid; place-items:center; border:2px solid white; }
+.profile-bio { max-width:560px; margin:8px auto; color:var(--muted); white-space:pre-wrap; }
+.verified-badge { display:inline-flex; padding:4px 10px; border-radius:999px; background:#e8f3ff; color:#1265c8; font-size:12px; font-weight:700; margin:3px auto 8px; }
+.profile-edit-panel,.verification-panel,.social-panel { margin-top:16px; }
+.profile-form { display:grid; gap:9px; }
+.profile-form input,.profile-form textarea { width:100%; }
+.social-list { display:grid; gap:10px; }
+.social-row,.social-result { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:12px; border:1px solid var(--line,#dce5f2); border-radius:14px; }
+.social-row > div,.social-result > div { display:grid; gap:3px; min-width:120px; }
+.social-row small,.social-result small { color:var(--muted); }
+.social-row button,.social-result button { padding:8px 12px; }
+.search-result { width:100%; }
+@media(max-width:520px) {
+  .profile-cover { min-height:135px; }
+  .social-row,.social-result { align-items:flex-start; }
+  .social-row button,.social-result button { flex:1 1 auto; }
+}

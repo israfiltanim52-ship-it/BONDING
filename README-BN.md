@@ -1,36 +1,44 @@
 # BONDING — হৃদয়ের বন্ধন ❤️
-
 **Where Hearts Connect.**  
 প্রতিষ্ঠাতা ও অ্যাপ নির্মাতা: **ইস্রাফিল তানিম (Israfil Tanim)**
 
-এটি আপনার আপলোড করা Bondhu Chat Web কোডকে ভিত্তি করে তৈরি BONDING-এর প্রাথমিক রূপান্তর। পুরোনো Firebase project `bondhu-chat-b76d6` থেকে এই সংস্করণকে নতুন Firebase project `bonding-1aab9`-এ নির্দেশ করা হয়েছে। পুরোনো Firebase project বা তার ডেটা মুছে ফেলা হয়নি।
+## v0.3-এ যা যুক্ত হয়েছে
+- Email/Password account creation, login, logout ও password reset
+- Firestore profile: নাম, bio, প্রোফাইল ছবি, কভার ছবি
+- Cloudinary unsigned image upload (`y6ujmcob` / `bonding_upload`)
+- ইমেইল দিয়ে ব্যবহারকারী খোঁজা
+- Friend request পাঠানো, গ্রহণ, প্রত্যাখ্যান ও বাতিল
+- বন্ধু তালিকা, চ্যাটে যাওয়া এবং বন্ধু সরানো
+- Verification আবেদন; অনুমোদনের পরে verified badge
+- Text post feed, reaction, comments, share এবং copy link
+- One-to-one text chat
+- বাংলা/ইংরেজি, light/dark theme, PWA
 
-## এই সংস্করণে প্রস্তুত
-- BONDING নাম, হৃদয়ের বন্ধন পরিচয় এবং নীল-সাদা ব্র্যান্ডিং
-- Firebase Email/Password account creation, login, logout ও password reset
-- ব্যবহারকারীর প্রাথমিক profile Firestore-এ সংরক্ষণ
-- Firestore-এ text post প্রকাশ ও সর্বশেষ ৩০টি পোস্টের live feed
-- ইমেইল দিয়ে ব্যবহারকারী খোঁজা এবং one-to-one text chat
-- বাংলা/ইংরেজি UI toggle, light/dark theme
-- PWA manifest ও service worker
-- প্রাথমিক Firestore security rules
+## Deploy করার আগে অবশ্যই
+1. ZIP extract করে এর ভেতরের সব ফাইল GitHub repository root-এ upload/replace করুন।
+2. Firebase Console → `bonding-1aab9` → Firestore Database → Rules খুলুন।
+3. এই ZIP-এর `firestore.rules` ফাইলের সম্পূর্ণ কোড Rules editor-এ বসিয়ে **Publish** করুন।
+4. GitHub Pages/hosting-এ নতুন ফাইল deploy হওয়ার পর ওয়েবসাইটে `Ctrl + Shift + R` দিন।
+5. দুইটি test account দিয়ে profile edit, photo upload, friend request/accept, feed ও chat পরীক্ষা করুন।
 
-## এখনো তৈরি হয়নি
-ছবি/ভিডিও পোস্ট, Storage upload, লাইক/কমেন্ট/শেয়ার, friend request/follow, stories/reels, group chat, audio/video call, push notification, marketplace, pages/groups, Tanim AI এবং পূর্ণাঙ্গ admin/moderation panel এখনো এই সংস্করণে নেই। এগুলো পরবর্তী ধাপে তৈরি হবে।
+## Cloudinary
+- Cloud name: `y6ujmcob`
+- Upload preset: `bonding_upload`
+- Signing mode: Unsigned
+- Folder: `bonding`
+- App code শুধু JPG, PNG, WebP এবং 5 MB-এর কম ছবি গ্রহণ করে।
+- Unsigned preset public endpoint; API Secret কখনো frontend-এ যোগ করবেন না। Cloudinary settings-এ allowed formats এবং max file size সীমাবদ্ধ করা থাকলে সেটি বজায় রাখুন।
 
-## চালুর আগে Firebase Console-এ করণীয়
-1. `bonding-1aab9` project খুলুন।
-2. **Authentication → Get started → Sign-in method → Email/Password → Enable → Save** করুন।
-3. **Firestore Database** তৈরি করুন। Standard edition ব্যবহার করুন। Scheduled backups আপাতত বন্ধ রাখুন; Blaze billing plan লাগতে পারে।
-4. Firestore-এর **Rules** ট্যাবে এই ZIP-এর `firestore.rules` ফাইলের সম্পূর্ণ কোড বসিয়ে **Publish** করুন।
-5. Hosting-এ deploy করার পর দুইটি test account খুলে login, text post এবং one-to-one chat পরীক্ষা করুন।
+## Verification approval
+এই build-এ আবেদন জমা ও verified badge দেখানোর ব্যবস্থা আছে; পূর্ণ admin dashboard এখনো নেই।
+1. Firebase Console → Firestore → `verificationRequests` collection খুলুন।
+2. আবেদনকারীর UID-যুক্ত document যাচাই করুন।
+3. অনুমোদন করলে `users/{UID}` document-এ boolean field `verified: true` যোগ করুন।
+4. প্রত্যাখ্যান করলে `verificationRequests/{UID}`-এর `status`-কে `rejected` করুন।
+এটি Firebase Console-এর মাধ্যমে অ্যাডমিন করবেন; সাধারণ ব্যবহারকারী নিজের verified field পরিবর্তন করতে পারে না।
 
-## Deploy
-এই ফোল্ডারের ভেতরের ফাইলগুলো Netlify বা অন্য static hosting-এর site root-এ আপলোড করুন। `index.html`, `app.js`, `style.css`, `manifest.json`, `sw.js` একই root-এ থাকতে হবে।
-
-## গুরুত্বপূর্ণ সতর্কতা
-- `app.js`-এ নতুন Firebase Web App config বসানো আছে। Web config client app-এ ব্যবহারের জন্য; ডেটার নিরাপত্তা নিশ্চিত করবে Authentication ও Firestore Security Rules।
-- Service Account JSON, private key বা password কখনো website-এ রাখবেন না।
-- এই build-এ Firebase Storage ব্যবহার করা হয়নি। ছবি/ভিডিও upload পরে আলাদা storage পরিকল্পনা ও খরচ যাচাই করে যোগ করতে হবে।
-- পুরোনো Bondhu Chat Firebase project `bondhu-chat-b76d6` মুছবেন না। পুরোনো ব্যবহারকারীর অ্যাকাউন্ট নতুন project-এ স্বয়ংক্রিয়ভাবে স্থানান্তর হয় না।
-- Firestore rules publish না করা পর্যন্ত production mode-এর default rules client access বন্ধ রাখবে।
+## গুরুত্বপূর্ণ
+- Firebase project `bonding-1aab9`-ই ব্যবহার করা হয়েছে। পুরোনো `bondhu-chat-b76d6` project পরিবর্তন/মুছবেন না।
+- Firebase Web config client-side app-এ আছে; নিরাপত্তা নিশ্চিত করতে Firestore Rules Publish করা আবশ্যক।
+- Firebase Storage ব্যবহার করা হয়নি; ছবি Cloudinary-তে যায়।
+- Audio/video calls, voice messages, groups, stories/reels, push notifications, admin dashboard এবং moderation tools এখনো পরবর্তী ধাপের কাজ।

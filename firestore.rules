@@ -3,25 +3,68 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function isChatMember(chatId) {
-      return signedIn() && exists(/databases/$(database)/documents/chats/$(chatId))
-        && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members;
+      return signedIn() &&
+        exists(/databases/$(database)/documents/chats/$(chatId)) &&
+        request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members;
     }
+
     match /users/{userId} {
       allow read: if signedIn();
       allow create: if signedIn() && request.auth.uid == userId
         && request.resource.data.uid == userId
-        && request.resource.data.name is string && request.resource.data.email is string
-        && request.resource.data.keys().hasOnly(['uid','name','email','createdAt','updatedAt']);
+        && request.resource.data.name is string
+        && request.resource.data.email is string
+        && request.resource.data.keys().hasOnly([
+          'uid','name','email','bio','photoURL','coverURL','verified','createdAt','updatedAt'
+        ])
+        && (!('verified' in request.resource.data) || request.resource.data.verified == false);
       allow update: if signedIn() && request.auth.uid == userId
         && request.resource.data.uid == resource.data.uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','email','updatedAt']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'name','email','bio','photoURL','coverURL','updatedAt'
+        ]);
       allow delete: if false;
     }
+
+    match /friendRequests/{requestId} {
+      allow read: if signedIn() &&
+        (resource.data.fromUid == request.auth.uid || resource.data.toUid == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.toUid is string
+        && request.resource.data.toUid != request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.keys().hasOnly([
+          'fromUid','fromName','toUid','toName','status','createdAt'
+        ]);
+      allow update: if signedIn()
+        && resource.data.toUid == request.auth.uid
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','respondedAt'])
+        && request.resource.data.status in ['accepted','rejected'];
+      allow delete: if signedIn() &&
+        (resource.data.fromUid == request.auth.uid || resource.data.toUid == request.auth.uid);
+    }
+
+    match /verificationRequests/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn() && request.auth.uid == userId
+        && request.resource.data.uid == userId
+        && request.resource.data.status == 'pending'
+        && request.resource.data.keys().hasOnly(['uid','name','email','status','createdAt']);
+      allow update: if signedIn() && request.auth.uid == userId
+        && resource.data.status == 'rejected'
+        && request.resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','createdAt']);
+      allow delete: if false;
+    }
+
     match /posts/{postId} {
       allow read: if signedIn();
       allow create: if signedIn() && request.resource.data.authorId == request.auth.uid
         && request.resource.data.authorName is string
-        && request.resource.data.text is string && request.resource.data.text.size() > 0
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
         && request.resource.data.text.size() <= 3000
         && request.resource.data.keys().hasOnly(['authorId','authorName','text','createdAt']);
       allow update, delete: if false;
@@ -43,18 +86,23 @@ service cloud.firestore {
         allow delete: if signedIn() && resource.data.uid == request.auth.uid;
       }
     }
+
     match /chats/{chatId} {
       allow create: if signedIn() && request.resource.data.members is list
-        && request.resource.data.members.size() == 2 && request.auth.uid in request.resource.data.members
+        && request.resource.data.members.size() == 2
+        && request.auth.uid in request.resource.data.members
         && request.resource.data.keys().hasOnly(['members','updatedAt','lastMessage']);
       allow read: if isChatMember(chatId);
-      allow update: if isChatMember(chatId) && request.resource.data.members == resource.data.members
+      allow update: if isChatMember(chatId)
+        && request.resource.data.members == resource.data.members
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessage','updatedAt']);
       allow delete: if false;
       match /messages/{messageId} {
         allow read: if isChatMember(chatId);
-        allow create: if isChatMember(chatId) && request.resource.data.senderId == request.auth.uid
-          && request.resource.data.text is string && request.resource.data.text.size() > 0
+        allow create: if isChatMember(chatId)
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 4000
           && request.resource.data.keys().hasOnly(['senderId','senderName','text','createdAt']);
         allow update, delete: if false;

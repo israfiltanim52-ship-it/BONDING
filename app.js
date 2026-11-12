@@ -281,7 +281,9 @@ async function ensureUserProfile(user, displayName = "") {
     name,
     email: user.email || "",
     updatedAt: serverTimestamp(),
-    ...(snapshot.exists() ? {} : { createdAt: serverTimestamp() })
+    ...(snapshot.exists() ? {} : {
+      createdAt: serverTimestamp(), bio: "", photoURL: "", coverURL: "", verified: false
+    })
   }, { merge: true });
 }
 
@@ -387,17 +389,29 @@ async function searchFriend() {
     }
 
     const userData = friend.data();
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "search-result";
-    button.textContent = `${userData.name || "বন্ধু"} (${userData.email})`;
-    button.addEventListener("click", () => openConversation({
-      uid: friend.id,
-      name: userData.name || "বন্ধু",
-      email: userData.email || ""
+    const result = document.createElement("div");
+    result.className = "search-result social-result";
+    const identity = document.createElement("div");
+    identity.innerHTML = "";
+    const title = document.createElement("strong");
+    title.textContent = userData.name || "বন্ধু";
+    const emailText = document.createElement("small");
+    emailText.textContent = userData.email || "";
+    identity.append(title, emailText);
+    const addButton = document.createElement("button");
+    addButton.type = "button";
+    addButton.className = "primary-btn";
+    addButton.textContent = "বন্ধুত্বের অনুরোধ পাঠান";
+    addButton.addEventListener("click", () => sendFriendRequest(friend.id, userData));
+    const chatButton = document.createElement("button");
+    chatButton.type = "button";
+    chatButton.className = "outline-btn";
+    chatButton.textContent = "চ্যাট";
+    chatButton.addEventListener("click", () => openConversation({
+      uid: friend.id, name: userData.name || "বন্ধু", email: userData.email || ""
     }));
-
-    $("searchResults").append(button);
+    result.append(identity, addButton, chatButton);
+    $("searchResults").append(result);
   } catch (error) {
     console.error("User search error:", error);
     status($("searchMessage"), readableError(error), true);
@@ -812,6 +826,232 @@ function listenToFeed() {
   });
 }
 
+
+/* BONDING v0.3 — profile, Cloudinary uploads, friends and verification */
+const CLOUDINARY_CLOUD_NAME = "y6ujmcob";
+const CLOUDINARY_UPLOAD_PRESET = "bonding_upload";
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+function safeText(el, value) {
+  if (el) el.textContent = value || "";
+}
+
+async function uploadBondingImage(file) {
+  if (!file) throw new Error("ছবি নির্বাচন করুন।");
+  const allowed = ["image/jpeg", "image/png", "image/webp"];
+  if (!allowed.includes(file.type)) throw new Error("শুধু JPG, PNG অথবা WebP ছবি আপলোড করা যাবে।");
+  if (file.size > MAX_IMAGE_BYTES) throw new Error("ছবির আকার ৫ MB-এর কম হতে হবে।");
+  const form = new FormData();
+  form.append("file", file);
+  form.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+  const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+    method: "POST", body: form
+  });
+  const result = await response.json();
+  if (!response.ok || !result.secure_url) {
+    console.error("Cloudinary upload failed:", result);
+    throw new Error(result.error?.message || "ছবি আপলোড করা যায়নি।");
+  }
+  return result.secure_url;
+}
+
+async function loadMyProfile() {
+  if (!state.user) return;
+  const snap = await getDoc(doc(db, "users", state.user.uid));
+  const data = snap.exists() ? snap.data() : {};
+  safeText($("profileName"), data.name || state.user.displayName || "বন্ধু");
+  safeText($("profileEmail"), state.user.email || "");
+  safeText($("profileBio"), data.bio || "");
+  if ($("editName")) $("editName").value = data.name || state.user.displayName || "";
+  if ($("editBio")) $("editBio").value = data.bio || "";
+  const photo = $("profilePhoto");
+  const avatar = $("profileAvatar");
+  if (data.photoURL && photo) {
+    photo.src = data.photoURL; photo.classList.remove("hidden");
+    avatar?.classList.add("hidden");
+  } else {
+    photo?.classList.add("hidden"); avatar?.classList.remove("hidden");
+    if (avatar) avatar.textContent = (data.name || "B").charAt(0).toUpperCase();
+  }
+  const cover = $("profileCover");
+  if (cover) {
+    cover.style.backgroundImage = data.coverURL
+      ? `linear-gradient(90deg,rgba(7,20,45,.18),rgba(7,20,45,.18)),url("${data.coverURL}")`
+      : "";
+  }
+  $("verifiedBadge")?.classList.toggle("hidden", data.verified !== true);
+  if (data.verified === true) safeText($("verifyMessage"), "আপনার অ্যাকাউন্ট যাচাইকৃত।");
+  else await loadVerificationStatus();
+}
+
+async function saveProfile(event) {
+  event.preventDefault();
+  if (!state.user) return;
+  const name = $("editName").value.trim();
+  const bio = $("editBio").value.trim();
+  if (!name) return status($("profileMessage"), "নাম লিখুন।", true);
+  const btn = $("saveProfileBtn"); btn.disabled = true;
+  try {
+    await updateProfile(state.user, { displayName: name });
+    await setDoc(doc(db, "users", state.user.uid), {
+      uid: state.user.uid, name, bio, email: state.user.email || "", updatedAt: serverTimestamp()
+    }, { merge: true });
+    safeText($("profileName"), name); safeText($("profileBio"), bio);
+    if ($("welcomeTitle")) $("welcomeTitle").textContent = `হ্যালো, ${name}!`;
+    status($("profileMessage"), "প্রোফাইল আপডেট হয়েছে।");
+    showToast("প্রোফাইল সংরক্ষিত হয়েছে।");
+  } catch (error) {
+    console.error("Profile save:", error); status($("profileMessage"), readableError(error), true);
+  } finally { btn.disabled = false; }
+}
+
+async function handleImageChange(inputId, field, message) {
+  const input = $(inputId);
+  const file = input?.files?.[0];
+  if (!file || !state.user) return;
+  showToast("ছবি আপলোড হচ্ছে…");
+  try {
+    const url = await uploadBondingImage(file);
+    await setDoc(doc(db, "users", state.user.uid), {
+      [field]: url, updatedAt: serverTimestamp()
+    }, { merge: true });
+    await loadMyProfile();
+    showToast(message);
+  } catch (error) {
+    console.error("Image upload:", error); showToast(error.message || "ছবি আপলোড ব্যর্থ হয়েছে।");
+  } finally { input.value = ""; }
+}
+
+async function sendFriendRequest(targetUid, targetData) {
+  if (!state.user || targetUid === state.user.uid) return;
+  try {
+    const q1 = await getDocs(query(collection(db, "friendRequests"),
+      where("fromUid", "==", state.user.uid)));
+    const q2 = await getDocs(query(collection(db, "friendRequests"),
+      where("toUid", "==", state.user.uid)));
+    const duplicate = [...q1.docs, ...q2.docs].some(d => {
+      const x=d.data();
+      return (x.fromUid===state.user.uid && x.toUid===targetUid ||
+        x.fromUid===targetUid && x.toUid===state.user.uid) &&
+        ["pending","accepted"].includes(x.status);
+    });
+    if (duplicate) return showToast("এই ব্যক্তির সঙ্গে অনুরোধ বা বন্ধুত্ব আগে থেকেই আছে।");
+    await addDoc(collection(db, "friendRequests"), {
+      fromUid: state.user.uid, fromName: state.user.displayName || state.user.email,
+      toUid: targetUid, toName: targetData.name || targetData.email || "বন্ধু",
+      status: "pending", createdAt: serverTimestamp()
+    });
+    showToast("বন্ধুত্বের অনুরোধ পাঠানো হয়েছে।");
+    await renderSocialLists();
+  } catch (error) { console.error(error); showToast(readableError(error)); }
+}
+
+async function respondFriendRequest(requestId, accept) {
+  try {
+    const ref = doc(db, "friendRequests", requestId);
+    await setDoc(ref, { status: accept ? "accepted" : "rejected", respondedAt: serverTimestamp() }, { merge: true });
+    showToast(accept ? "বন্ধুত্ব গ্রহণ করা হয়েছে।" : "অনুরোধ প্রত্যাখ্যান করা হয়েছে।");
+    await renderSocialLists();
+  } catch (error) { console.error(error); showToast(readableError(error)); }
+}
+
+async function removeFriend(requestId) {
+  if (!confirm("এই বন্ধুকে তালিকা থেকে সরাতে চান?")) return;
+  try {
+    await deleteDoc(doc(db, "friendRequests", requestId));
+    showToast("বন্ধুকে তালিকা থেকে সরানো হয়েছে।");
+    await renderSocialLists();
+  } catch (error) { console.error(error); showToast(readableError(error)); }
+}
+
+function makeSocialRow(name, detail, actions = []) {
+  const row = document.createElement("div"); row.className = "social-row";
+  const info = document.createElement("div");
+  const strong = document.createElement("strong"); strong.textContent = name || "BONDING ব্যবহারকারী";
+  const small = document.createElement("small"); small.textContent = detail || "";
+  info.append(strong, small); row.append(info);
+  actions.forEach(({label, cls, run}) => {
+    const btn = document.createElement("button"); btn.type = "button";
+    btn.className = cls || "outline-btn"; btn.textContent = label;
+    btn.addEventListener("click", run); row.append(btn);
+  });
+  return row;
+}
+
+async function renderSocialLists() {
+  if (!state.user) return;
+  const uid = state.user.uid;
+  const incomingAll = await getDocs(query(collection(db, "friendRequests"), where("toUid", "==", uid)));
+  const outgoingAll = await getDocs(query(collection(db, "friendRequests"), where("fromUid", "==", uid)));
+  const incoming = { docs: incomingAll.docs.filter(d => d.data().status === "pending"), empty: incomingAll.docs.every(d => d.data().status !== "pending"), forEach: cb => incomingAll.docs.filter(d => d.data().status === "pending").forEach(cb) };
+  const outgoing = { docs: outgoingAll.docs.filter(d => d.data().status === "pending"), empty: outgoingAll.docs.every(d => d.data().status !== "pending"), forEach: cb => outgoingAll.docs.filter(d => d.data().status === "pending").forEach(cb) };
+  const acceptedFrom = { docs: outgoingAll.docs.filter(d => d.data().status === "accepted") };
+  const acceptedTo = { docs: incomingAll.docs.filter(d => d.data().status === "accepted") };
+  const incomingEl = $("incomingRequests"), outgoingEl = $("outgoingRequests"), friendsEl = $("friendsList");
+  [incomingEl, outgoingEl, friendsEl].forEach(el => el?.replaceChildren());
+  if (incoming.empty) incomingEl?.append(Object.assign(document.createElement("p"), {className:"muted",textContent:"নতুন কোনো অনুরোধ নেই।"}));
+  incoming.forEach(item => {
+    const d = item.data();
+    incomingEl?.append(makeSocialRow(d.fromName, "বন্ধুত্ব করতে চান", [
+      {label:"গ্রহণ",cls:"primary-btn",run:()=>respondFriendRequest(item.id,true)},
+      {label:"বাতিল",cls:"outline-btn",run:()=>respondFriendRequest(item.id,false)}
+    ]));
+  });
+  if (outgoing.empty) outgoingEl?.append(Object.assign(document.createElement("p"), {className:"muted",textContent:"কোনো পাঠানো অনুরোধ নেই।"}));
+  outgoing.forEach(item => {
+    const d=item.data();
+    outgoingEl?.append(makeSocialRow(d.toName, "অনুরোধের উত্তর অপেক্ষমাণ", [
+      {label:"অনুরোধ বাতিল",cls:"outline-btn",run:()=>removeFriend(item.id)}
+    ]));
+  });
+  const all = [...acceptedFrom.docs, ...acceptedTo.docs];
+  if (!all.length) friendsEl?.append(Object.assign(document.createElement("p"), {className:"muted",textContent:"এখনো কোনো বন্ধু নেই।"}));
+  all.forEach(item => {
+    const d=item.data(), isFrom=d.fromUid===uid;
+    const friendUid=isFrom?d.toUid:d.fromUid;
+    const friendName=isFrom?d.toName:d.fromName;
+    friendsEl?.append(makeSocialRow(friendName, "BONDING বন্ধু", [
+      {label:"চ্যাট",cls:"primary-btn",run:async()=>{
+        const userSnap=await getDoc(doc(db,"users",friendUid));
+        const u=userSnap.exists()?userSnap.data():{};
+        openConversation({uid:friendUid,name:u.name||friendName,email:u.email||""});
+      }},
+      {label:"বন্ধু সরান",cls:"outline-btn",run:()=>removeFriend(item.id)}
+    ]));
+  });
+}
+
+async function applyForVerification() {
+  if (!state.user) return;
+  try {
+    const ref=doc(db,"verificationRequests",state.user.uid);
+    const old=await getDoc(ref);
+    if (old.exists() && old.data().status==="pending") {
+      return status($("verifyMessage"), "আপনার আবেদন ইতিমধ্যে পর্যালোচনাধীন।");
+    }
+    await setDoc(ref,{
+      uid:state.user.uid, name:state.user.displayName||state.user.email||"ব্যবহারকারী",
+      email:state.user.email||"", status:"pending", createdAt:serverTimestamp()
+    });
+    status($("verifyMessage"), "আবেদন জমা হয়েছে। অ্যাডমিন যাচাই করবেন।");
+    $("verifyApplyBtn").disabled=true;
+  } catch(error) { console.error(error); status($("verifyMessage"),readableError(error),true); }
+}
+
+async function loadVerificationStatus() {
+  if (!state.user) return;
+  try {
+    const snap=await getDoc(doc(db,"verificationRequests",state.user.uid));
+    if (snap.exists() && snap.data().status==="pending") {
+      status($("verifyMessage"), "আপনার আবেদন পর্যালোচনাধীন।");
+      $("verifyApplyBtn").disabled=true;
+    } else {
+      $("verifyApplyBtn").disabled=false;
+    }
+  } catch(error) { console.warn("Verification status:",error); }
+}
+
+
 /* Buttons and forms */
 $("authForm")?.addEventListener("submit", submitAuth);
 $("resetPassword")?.addEventListener("click", resetPassword);
@@ -845,6 +1085,10 @@ function toggleTheme() {
 }
 
 $("searchBtn")?.addEventListener("click", searchFriend);
+$("profileForm")?.addEventListener("submit", saveProfile);
+$("avatarFile")?.addEventListener("change", () => handleImageChange("avatarFile", "photoURL", "প্রোফাইল ছবি আপডেট হয়েছে।"));
+$("coverFile")?.addEventListener("change", () => handleImageChange("coverFile", "coverURL", "কভার ছবি আপডেট হয়েছে।"));
+$("verifyApplyBtn")?.addEventListener("click", applyForVerification);
 $("userSearch")?.addEventListener("keydown", event => {
   if (event.key === "Enter") {
     event.preventDefault();
@@ -905,6 +1149,11 @@ onAuthStateChanged(auth, async user => {
   try {
     await ensureUserProfile(user);
     showSignedInView(user);
+    await loadMyProfile();
+    renderSocialLists().catch(error => {
+      console.warn("Social lists unavailable until updated Firestore rules are published:", error);
+      showToast("বন্ধুত্ব ফিচারের জন্য নতুন Firestore Rules Publish করতে হবে।");
+    });
     listenToChats(user);
     listenToFeed();
     openPage("homePage");

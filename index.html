@@ -162,6 +162,19 @@
         <p id="searchMessage" class="status-message"></p>
         <div id="searchResults" class="search-results"></div>
 
+        <section class="panel social-panel">
+          <div class="section-heading"><h3>বন্ধুত্বের অনুরোধ</h3></div>
+          <div id="incomingRequests" class="social-list"><p class="muted">অনুরোধ লোড হচ্ছে…</p></div>
+        </section>
+        <section class="panel social-panel">
+          <div class="section-heading"><h3>পাঠানো অনুরোধ</h3></div>
+          <div id="outgoingRequests" class="social-list"><p class="muted">লোড হচ্ছে…</p></div>
+        </section>
+        <section class="panel social-panel">
+          <div class="section-heading"><h3>আমার বন্ধুরা</h3></div>
+          <div id="friendsList" class="social-list"><p class="muted">বন্ধুর তালিকা লোড হচ্ছে…</p></div>
+        </section>
+
         <div class="section-heading">
           <h3 data-i18n="yourChats">আপনার চ্যাট</h3>
         </div>
@@ -249,15 +262,39 @@
           </div>
         </div>
 
-        <div class="profile-card">
-          <div class="avatar profile-avatar" id="profileAvatar">B</div>
-          <h3 id="profileName">বন্ধু</h3>
-          <p id="profileEmail" class="muted"></p>
-          <span class="online-pill">
-            <i></i>
-            <span data-i18n="signedIn">সাইন ইন করা আছে</span>
-          </span>
+        <div class="profile-cover" id="profileCover">
+          <div class="cover-actions"><label class="outline-btn upload-label" for="coverFile">কভার ছবি বদলান</label><input id="coverFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></div>
         </div>
+        <div class="profile-card profile-card-v3">
+          <label class="profile-photo-wrap" for="avatarFile" title="প্রোফাইল ছবি বদলান">
+            <img id="profilePhoto" class="profile-photo hidden" alt="প্রোফাইল ছবি">
+            <div class="avatar profile-avatar" id="profileAvatar">B</div>
+            <span class="photo-edit-mark">✎</span>
+          </label>
+          <input id="avatarFile" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+          <h3 id="profileName">বন্ধু</h3>
+          <span id="verifiedBadge" class="verified-badge hidden" title="যাচাইকৃত অ্যাকাউন্ট">✓ যাচাইকৃত</span>
+          <p id="profileEmail" class="muted"></p>
+          <p id="profileBio" class="profile-bio"></p>
+          <span class="online-pill"><i></i><span data-i18n="signedIn">সাইন ইন করা আছে</span></span>
+        </div>
+
+        <section class="panel profile-edit-panel">
+          <div class="section-heading"><h3>প্রোফাইল সম্পাদনা</h3><span class="pill">MY PROFILE</span></div>
+          <form id="profileForm" class="profile-form">
+            <label for="editName">নাম</label><input id="editName" maxlength="60" required>
+            <label for="editBio">নিজের পরিচিতি</label><textarea id="editBio" rows="3" maxlength="240" placeholder="নিজের সম্পর্কে সংক্ষেপে লিখুন"></textarea>
+            <button class="primary-btn full" type="submit" id="saveProfileBtn">পরিবর্তন সংরক্ষণ</button>
+            <p id="profileMessage" class="status-message"></p>
+          </form>
+        </section>
+
+        <section class="panel verification-panel">
+          <div class="section-heading"><h3>অ্যাকাউন্ট ভেরিফিকেশন</h3><span class="pill">VERIFICATION</span></div>
+          <p class="muted">ভেরিফিকেশন আবেদন জমা দিন। যাচাই শেষে অ্যাডমিন অনুমোদন দিলে প্রোফাইলে ব্যাজ দেখা যাবে।</p>
+          <button id="verifyApplyBtn" class="outline-btn" type="button">✓ ভেরিফিকেশনের আবেদন</button>
+          <p id="verifyMessage" class="status-message"></p>
+        </section>
 
         <div class="settings-list">
           <div class="setting-row">

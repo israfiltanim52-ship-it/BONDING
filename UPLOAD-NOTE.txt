@@ -1,8 +1,2 @@
-BONDHU CHAT — UPDATED FILES
-
-1. ZIP extract করুন।
-2. bondhu-chat-main ফোল্ডারের ভেতরের ফাইলগুলো GitHub repository root-এ upload/replace করুন।
-3. index.html, app.js, style.css, manifest.json, sw.js একই root directory-তে রাখুন।
-4. Firebase project bondhu-chat-b76d6 মুছবেন না এবং পুরোনো Authentication users delete করবেন না।
-5. এই সংস্করণে text chat আছে; voice recording এবং audio/video calls এখনো চালু নয়।
-6. বিস্তারিত নির্দেশনা README-BN.md-এ আছে।
+BONDING v0.3 UPDATED BUILD
+Extract the ZIP and upload/replace all files inside BONDING-main at the GitHub repository root. Publish firestore.rules in Firebase Console before testing. See README-BN.md and SETUP-BN.txt.
