@@ -1,5 +1,1 @@
-BONDING v0.5 — searchable member directory update
-
-Extract the ZIP and upload/replace the files inside BONDING-main at the GitHub repository root. Do not upload the outer folder as a nested directory. Existing Firebase accounts and Firestore data are not deleted by this update.
-Firebase project/config and Cloudinary settings are retained. AI backend, media messaging, online/seen indicators, and voice/video calls are not implemented in this build.
-See README-BN.md for details.
+BONDING Admin Dashboard build. Upload/replace files inside BONDING-main at repository root. Publish firestore.rules, then create system/adminConfig with superAdminUid set to the founder Firebase Auth UID. See SETUP-BN.txt. Existing user data is not deleted.

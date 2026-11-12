@@ -1,11 +1,12 @@
-BONDING v0.5 — আপডেট ইনস্টল নির্দেশনা
+BONDING Admin Dashboard — প্রাথমিক সেটআপ
 
-১) ZIP Extract করুন।
-২) BONDING-main ফোল্ডারের ভেতরের সব ফাইল GitHub repository root-এ upload/replace করুন; nested BONDING-main ফোল্ডার তৈরি করবেন না।
-৩) Commit changes দিন এবং hosting deploy শেষ হওয়া পর্যন্ত অপেক্ষা করুন।
-৪) ওয়েবসাইটে Ctrl + Shift + R চাপুন।
-৫) দুইটি আলাদা test account দিয়ে Friends ও Chat পেজে সব ব্যবহারকারী খোঁজা, friend request এবং নতুন chat পরীক্ষা করুন।
+১) ZIP Extract করে BONDING-main ফোল্ডারের ভেতরের ফাইলগুলো GitHub repository root-এ upload/replace করুন।
+২) Firebase Console → Firestore Database → Rules-এ ZIP-এর firestore.rules সম্পূর্ণ বসিয়ে Publish করুন।
+৩) Firebase Console → Authentication → Users-এ প্রতিষ্ঠাতা ইস্রাফিল তানিমের অ্যাকাউন্ট খুঁজে UID কপি করুন।
+৪) Firestore Database → Data → Start collection: system; Document ID: adminConfig; Field: superAdminUid (string); Value: প্রতিষ্ঠাতার UID। এই ধাপটি শুধু প্রজেক্ট মালিক করবেন।
+৫) অ্যাপ থেকে লগআউট/লগইন করুন; Settings-এ Admin Control Center দেখা যাবে। মোবাইলেও একইভাবে পরিচালনা করা যাবে।
+৬) Super Admin Dashboard → Admin নিয়োগ থেকে নিবন্ধিত ইমেইল দিয়ে Admin, Moderator বা Verification Manager নিয়োগ করুন।
 
-এই build-এ Firebase project/config এবং Cloudinary configuration অপরিবর্তিত রাখা হয়েছে। Firestore/Storage data মুছে ফেলা হয় না।
-নোট: Firestore Rules-এ signed-in user-কে users collection read করার অনুমতি থাকতে হবে। AI backend, ছবি/ফাইল chat attachment, online/seen indicator ও voice/video call এখনো সম্পূর্ণ নয়।
-Cloudinary: cloud name y6ujmcob; unsigned preset bonding_upload. API Secret/Private Key frontend-এ দেবেন না।
+নিরাপত্তা: system/adminConfig ডকুমেন্টটি Firestore Rules দিয়ে client write থেকে বন্ধ। Founder UID ভুল দেবেন না। প্রথম Super Admin কেবল Firebase Console-এর মাধ্যমে সেট করতে হবে।
+
+এই পর্যায়ে আছে: সদস্য তালিকা/সার্চ, পোস্ট মুছে moderation, ভেরিফিকেশন approve/reject, একাধিক admin role assign/revoke, admin action log। Auth account suspend/delete, reports workflow, comment moderation UI, analytics charts ও Cloud Functions এখনো পরবর্তী ধাপ।

@@ -53,7 +53,11 @@ const state = {
   unsubscribeMessages: null,
   unsubscribeChats: null,
   unsubscribeFeed: null,
-  postUnsubs: []
+  postUnsubs: [],
+  adminRole: null,
+  isSuperAdmin: false,
+  adminUsersCache: [],
+  adminPostsCache: []
 };
 
 const translations = {
@@ -1201,6 +1205,271 @@ async function renderUserDirectory(containerId, searchValue = "", forceRefresh =
   }
 }
 
+/* BONDING Admin Dashboard — role checks are enforced again by Firestore Rules. */
+const ADMIN_ROLE_LABELS = {
+  superAdmin: "SUPER ADMIN",
+  admin: "ADMIN",
+  moderator: "MODERATOR",
+  verificationManager: "VERIFICATION MANAGER"
+};
+
+async function loadAdminAccess() {
+  state.adminRole = null;
+  state.isSuperAdmin = false;
+  if (!state.user) return;
+  try {
+    const configSnap = await getDoc(doc(db, "system", "adminConfig"));
+    const founderUid = configSnap.exists() ? configSnap.data().superAdminUid : "";
+    if (founderUid && founderUid === state.user.uid) {
+      state.isSuperAdmin = true;
+      state.adminRole = "superAdmin";
+    } else {
+      const roleSnap = await getDoc(doc(db, "adminRoles", state.user.uid));
+      if (roleSnap.exists()) state.adminRole = roleSnap.data().role || null;
+    }
+  } catch (error) {
+    console.warn("Admin access check:", error);
+  }
+  const entry = $("adminEntryPanel");
+  if (entry) entry.classList.toggle("hidden", !state.adminRole);
+}
+
+function adminCanManagePosts() {
+  return state.isSuperAdmin || ["admin", "moderator"].includes(state.adminRole);
+}
+function adminCanManageVerification() {
+  return state.isSuperAdmin || ["admin", "verificationManager"].includes(state.adminRole);
+}
+function adminCanViewUsers() {
+  return !!state.adminRole;
+}
+
+async function writeAdminLog(action, targetId, details = "") {
+  if (!state.user || !state.adminRole) return;
+  try {
+    await addDoc(collection(db, "adminLogs"), {
+      actorUid: state.user.uid,
+      actorName: state.user.displayName || state.user.email || "Admin",
+      actorRole: state.adminRole,
+      action, targetId: targetId || "",
+      details: String(details).slice(0, 500),
+      createdAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.warn("Admin audit log could not be written:", error);
+  }
+}
+
+function adminRow(title, subtitle, actions = []) {
+  const row = document.createElement("div");
+  row.className = "admin-row";
+  const identity = document.createElement("div");
+  identity.className = "admin-row-identity";
+  const strong = document.createElement("strong"); strong.textContent = title || "নাম নেই";
+  const small = document.createElement("small"); small.textContent = subtitle || "";
+  identity.append(strong, small);
+  row.append(identity);
+  if (actions.length) {
+    const controls = document.createElement("div"); controls.className = "admin-row-actions";
+    actions.forEach(action => {
+      const button = document.createElement("button"); button.type = "button";
+      button.className = action.className || "outline-btn"; button.textContent = action.label;
+      button.addEventListener("click", action.onClick); controls.append(button);
+    });
+    row.append(controls);
+  }
+  return row;
+}
+
+function setAdminListMessage(id, message) {
+  const target = $(id); if (!target) return;
+  target.replaceChildren();
+  const p = document.createElement("p"); p.className = "muted"; p.textContent = message; target.append(p);
+}
+
+async function openAdminDashboard() {
+  if (!state.adminRole) {
+    showToast("এই অ্যাকাউন্টের Admin Dashboard ব্যবহারের অনুমতি নেই।");
+    return;
+  }
+  openPage("adminDashboardPage");
+  $("adminRoleLabel").textContent = ADMIN_ROLE_LABELS[state.adminRole] || "ADMIN";
+  $("adminIdentityName").textContent = state.user.displayName || state.user.email || "BONDING Admin";
+  $("adminIdentityUid").textContent = `UID: ${state.user.uid}`;
+  $("superAdminManagement")?.classList.toggle("hidden", !state.isSuperAdmin);
+  $("adminVerificationSection")?.classList.toggle("hidden", !adminCanManageVerification());
+  $("adminPostsSection")?.classList.toggle("hidden", !adminCanManagePosts());
+  await refreshAdminDashboard();
+}
+
+async function refreshAdminDashboard() {
+  if (!state.adminRole) return;
+  $("adminUsersCount").textContent = "…";
+  $("adminPostsCount").textContent = "…";
+  $("adminPendingCount").textContent = "…";
+  try {
+    const tasks = [getDocs(collection(db, "users"))];
+    if (adminCanManagePosts()) tasks.push(getDocs(query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(40))));
+    if (adminCanManageVerification()) tasks.push(getDocs(collection(db, "verificationRequests")));
+    const results = await Promise.all(tasks);
+    let idx = 0;
+    const usersSnap = results[idx++];
+    state.adminUsersCache = usersSnap.docs.map(d => ({ uid:d.id, ...d.data() }));
+    $("adminUsersCount").textContent = usersSnap.size;
+    renderAdminUsers();
+    if (adminCanManagePosts()) {
+      const postsSnap = results[idx++];
+      state.adminPostsCache = postsSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+      $("adminPostsCount").textContent = postsSnap.size;
+      renderAdminPosts();
+    } else {
+      $("adminPostsCount").textContent = "—";
+    }
+    if (adminCanManageVerification()) {
+      const verifySnap = results[idx++];
+      const pending = verifySnap.docs.filter(d => d.data().status === "pending");
+      $("adminPendingCount").textContent = pending.length;
+      renderAdminVerifications(pending);
+    } else {
+      $("adminPendingCount").textContent = "—";
+    }
+    if (state.isSuperAdmin) {
+      await renderAdminStaff();
+      await renderAdminLogs();
+    }
+  } catch (error) {
+    console.error("Admin dashboard load:", error);
+    showToast("ড্যাশবোর্ডের তথ্য লোড হয়নি। Firestore Rules প্রকাশিত হয়েছে কি না দেখুন।");
+  }
+}
+
+function renderAdminUsers() {
+  const target = $("adminUsersList"); if (!target) return;
+  const term = ($("adminUserSearch")?.value || "").trim().toLowerCase();
+  const users = state.adminUsersCache.filter(u =>
+    !term || (u.name || "").toLowerCase().includes(term) || (u.email || "").toLowerCase().includes(term));
+  target.replaceChildren();
+  if (!users.length) return setAdminListMessage("adminUsersList", "কোনো ব্যবহারকারী পাওয়া যায়নি।");
+  users.slice(0, 100).forEach(user => {
+    const verified = user.verified ? " • Verified" : "";
+    target.append(adminRow(user.name || "নাম নেই", `${user.email || "ইমেইল নেই"} • ${user.uid}${verified}`));
+  });
+  if (users.length > 100) {
+    const note = document.createElement("p"); note.className = "muted"; note.textContent = `প্রথম ১০০ জন দেখানো হচ্ছে; মোট ${users.length} জন।`;
+    target.append(note);
+  }
+}
+
+function renderAdminPosts() {
+  const target = $("adminPostsList"); if (!target) return;
+  target.replaceChildren();
+  if (!state.adminPostsCache.length) return setAdminListMessage("adminPostsList", "এখনো কোনো পোস্ট নেই।");
+  state.adminPostsCache.forEach(post => {
+    const text = (post.text || "").replace(/\s+/g, " ").slice(0, 110);
+    target.append(adminRow(text || "লেখাবিহীন পোস্ট", `${post.authorName || "সদস্য"} • ${post.authorId || ""}`,[{
+      label:"পোস্ট মুছুন", className:"danger-btn", onClick:async()=>{
+        if (!confirm("এই পোস্টটি স্থায়ীভাবে মুছে ফেলতে চান?")) return;
+        try {
+          await deleteDoc(doc(db,"posts",post.id));
+          await writeAdminLog("delete_post",post.id,"Post removed from admin dashboard");
+          showToast("পোস্ট মুছে ফেলা হয়েছে।"); await refreshAdminDashboard();
+        } catch(error) { console.error(error); showToast(readableError(error)); }
+      }
+    }]));
+  });
+}
+
+function renderAdminVerifications(pendingDocs) {
+  const target = $("adminVerificationList"); if (!target) return;
+  target.replaceChildren();
+  if (!pendingDocs.length) return setAdminListMessage("adminVerificationList", "কোনো অপেক্ষমাণ আবেদন নেই।");
+  pendingDocs.forEach(item => {
+    const request = item.data();
+    target.append(adminRow(request.name || "BONDING সদস্য", request.email || item.id,[
+      {label:"অনুমোদন",className:"primary-btn",onClick:()=>reviewVerification(item.id,true)},
+      {label:"প্রত্যাখ্যান",className:"danger-btn",onClick:()=>reviewVerification(item.id,false)}
+    ]));
+  });
+}
+
+async function reviewVerification(uid, approve) {
+  if (!adminCanManageVerification()) return showToast("আপনার এই কাজের অনুমতি নেই।");
+  const action = approve ? "অনুমোদন" : "প্রত্যাখ্যান";
+  if (!confirm(`এই ভেরিফিকেশন আবেদন ${action} করবেন?`)) return;
+  try {
+    await setDoc(doc(db,"verificationRequests",uid), {
+      status: approve ? "approved" : "rejected",
+      reviewedBy: state.user.uid,
+      reviewedAt: serverTimestamp()
+    }, {merge:true});
+    if (approve) await setDoc(doc(db,"users",uid),{verified:true,updatedAt:serverTimestamp()},{merge:true});
+    await writeAdminLog(approve ? "approve_verification" : "reject_verification",uid,action);
+    showToast(`আবেদন ${approve ? "অনুমোদন" : "প্রত্যাখ্যান" করা হয়েছে।`);
+    await refreshAdminDashboard();
+  } catch(error) { console.error(error); showToast(readableError(error)); }
+}
+
+async function renderAdminStaff() {
+  const target = $("adminStaffList"); if (!target || !state.isSuperAdmin) return;
+  try {
+    const snap = await getDocs(collection(db,"adminRoles"));
+    target.replaceChildren();
+    if (!snap.size) return setAdminListMessage("adminStaffList","এখনো অন্য কোনো অ্যাডমিন নিয়োগ করা হয়নি।");
+    snap.docs.forEach(item => {
+      const data = item.data();
+      target.append(adminRow(data.name || data.email || item.id, `${ADMIN_ROLE_LABELS[data.role] || data.role} • ${data.email || item.id}`,[{
+        label:"পদ বাতিল",className:"danger-btn",onClick:async()=>{
+          if (item.id === state.user.uid) return showToast("নিজের Super Admin অ্যাক্সেস এখান থেকে বাতিল করা যাবে না।");
+          if (!confirm(`${data.name || data.email} এর অ্যাডমিন পদ বাতিল করবেন?`)) return;
+          try { await deleteDoc(doc(db,"adminRoles",item.id)); await writeAdminLog("remove_admin",item.id,"Admin role revoked"); showToast("অ্যাডমিন পদ বাতিল হয়েছে।"); await renderAdminStaff(); }
+          catch(error) { console.error(error); showToast(readableError(error)); }
+        }
+      }]));
+    });
+  } catch(error) { console.error(error); setAdminListMessage("adminStaffList","অ্যাডমিন তালিকা পড়া যায়নি। Rules পরীক্ষা করুন।"); }
+}
+
+async function renderAdminLogs() {
+  const target = $("adminLogsList");
+  if (!target || !state.isSuperAdmin) return;
+  try {
+    const snap = await getDocs(query(collection(db,"adminLogs"),orderBy("createdAt","desc"),limit(30)));
+    target.replaceChildren();
+    if (!snap.size) return setAdminListMessage("adminLogsList","এখনো কোনো অ্যাডমিন কার্যক্রম রেকর্ড হয়নি।");
+    snap.docs.forEach(item => {
+      const log = item.data();
+      const when = log.createdAt?.toDate ? log.createdAt.toDate().toLocaleString("bn-BD") : "সময় অনুপলব্ধ";
+      target.append(adminRow(log.action || "কার্যক্রম", `${log.actorName || log.actorUid || "Admin"} • ${log.actorRole || ""} • ${when} • ${log.targetId || ""}`));
+    });
+  } catch(error) {
+    console.warn("Admin logs:",error);
+    setAdminListMessage("adminLogsList","অ্যাডমিন লগ পড়া যায়নি।");
+  }
+}
+
+async function assignAdminRole() {
+  if (!state.isSuperAdmin) return showToast("শুধু Super Admin অ্যাডমিন নিয়োগ করতে পারবেন।");
+  const email = $("newAdminEmail")?.value.trim().toLowerCase();
+  const role = $("newAdminRole")?.value;
+  if (!email) return status($("adminManageMessage"),"ব্যবহারকারীর ইমেইল লিখুন।",true);
+  if (!["admin","moderator","verificationManager"].includes(role)) return;
+  try {
+    const snap = await getDocs(query(collection(db,"users"),where("email","==",email),limit(1)));
+    if (snap.empty) return status($("adminManageMessage"),"এই ইমেইলে BONDING অ্যাকাউন্ট পাওয়া যায়নি।",true);
+    const member = snap.docs[0];
+    if (member.id === state.user.uid) return status($("adminManageMessage"),"নিজেকে অন্য পদে নিয়োগ করা যাবে না।",true);
+    const data = member.data();
+    await setDoc(doc(db,"adminRoles",member.id),{
+      uid:member.id, name:data.name || "BONDING সদস্য", email:data.email || email,
+      role, assignedBy:state.user.uid, createdAt:serverTimestamp()
+    });
+    await writeAdminLog("assign_admin",member.id,`Assigned role: ${role}`);
+    $("newAdminEmail").value = "";
+    status($("adminManageMessage"),`${data.name || email}-কে ${ADMIN_ROLE_LABELS[role]} পদে নিয়োগ করা হয়েছে।`);
+    await renderAdminStaff();
+  } catch(error) { console.error(error); status($("adminManageMessage"),readableError(error),true); }
+}
+
 async function applyForVerification() {
   if (!state.user) return;
   try {
@@ -1335,6 +1604,12 @@ $("closeTanimAi")?.addEventListener("click", () => $("tanimAiPanel")?.classList.
 applyLanguage();
 applyTheme();
 
+$("openAdminDashboard")?.addEventListener("click", openAdminDashboard);
+$("adminRefreshBtn")?.addEventListener("click", refreshAdminDashboard);
+$("adminBackBtn")?.addEventListener("click", () => openPage("settingsPage"));
+$("adminUserSearch")?.addEventListener("input", renderAdminUsers);
+$("assignAdminBtn")?.addEventListener("click", assignAdminRole);
+
 /* Keep the UI in sync with Firebase Authentication */
 onAuthStateChanged(auth, async user => {
   state.user = user;
@@ -1348,6 +1623,9 @@ onAuthStateChanged(auth, async user => {
     state.unsubscribeChats = null;
     state.unsubscribeFeed = null;
     state.peer = null;
+    state.adminRole = null;
+    state.isSuperAdmin = false;
+    $("adminEntryPanel")?.classList.add("hidden");
 
     showSignedOutView();
     return;
@@ -1355,6 +1633,7 @@ onAuthStateChanged(auth, async user => {
 
   try {
     await ensureUserProfile(user);
+    await loadAdminAccess();
     showSignedInView(user);
     await loadMyProfile();
     renderSocialLists().catch(error => {

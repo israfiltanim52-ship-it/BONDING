@@ -318,6 +318,11 @@
       <!-- SETTINGS -->
       <section id="settingsPage" class="page">
         <div class="page-heading"><div><p class="eyebrow">YOUR PREFERENCES</p><h2>সেটিংস</h2></div><div class="round-icon">⚙</div></div>
+        <section id="adminEntryPanel" class="panel admin-entry-panel hidden">
+          <div class="section-heading"><div><h3>Admin Control Center</h3><p class="muted">BONDING পরিচালনার নিরাপদ অ্যাডমিন ড্যাশবোর্ড।</p></div><span class="admin-crown">★</span></div>
+          <button id="openAdminDashboard" class="primary-btn full" type="button">Admin Dashboard খুলুন</button>
+        </section>
+
         <section class="panel theme-panel">
           <div class="section-heading"><h3>রঙের থিম</h3><span class="pill">6 COLORS</span></div>
           <p class="muted">আপনার পছন্দের রং বেছে নিন।</p>
@@ -371,6 +376,23 @@
           <div class="developer-row"><div class="developer-avatar">IT</div><div><strong>ইস্রাফিল তানিম</strong><p>প্রতিষ্ঠাতা ও অ্যাপ নির্মাতা</p><small>Where Hearts Connect. ❤️</small></div></div>
           <p class="muted">BONDING — হৃদয়ের বন্ধন। মানুষের সঙ্গে মানুষের সুন্দর যোগাযোগ গড়ে তোলার একটি উদ্যোগ।</p>
         </section>
+      </section>
+
+      <!-- ADMIN DASHBOARD -->
+      <section id="adminDashboardPage" class="page admin-dashboard-page">
+        <div class="page-heading admin-heading"><div><p class="eyebrow">BONDING CONTROL CENTER</p><h2>Admin Dashboard</h2><p class="muted">নিরাপদ প্রশাসনিক নিয়ন্ত্রণ</p></div><div class="admin-crown large">★</div></div>
+        <div class="admin-toolbar"><span id="adminRoleLabel" class="admin-role-pill">ADMIN</span><button id="adminRefreshBtn" class="outline-btn" type="button">↻ রিফ্রেশ</button><button id="adminBackBtn" class="outline-btn" type="button">ফিরে যান</button></div>
+        <section class="admin-identity panel"><strong id="adminIdentityName">অ্যাডমিন</strong><small id="adminIdentityUid"></small><p class="muted">আপনার অ্যাকাউন্টের UID। Super Admin প্রথমবার সেটআপ করতে Firebase Console-এর Authentication → Users থেকে প্রতিষ্ঠাতার UID নিয়ে Firestore-এর system/adminConfig ডকুমেন্টে বসাতে হবে।</p></section>
+        <div class="admin-stats-grid">
+          <article class="admin-stat"><span>মোট ব্যবহারকারী</span><strong id="adminUsersCount">—</strong></article>
+          <article class="admin-stat"><span>মোট পোস্ট</span><strong id="adminPostsCount">—</strong></article>
+          <article class="admin-stat"><span>অপেক্ষমাণ ভেরিফিকেশন</span><strong id="adminPendingCount">—</strong></article>
+        </div>
+        <section class="panel admin-section"><div class="section-heading"><div><h3>ব্যবহারকারী তালিকা</h3><p class="muted">নিবন্ধিত সদস্যদের তথ্য দেখুন।</p></div></div><input id="adminUserSearch" class="directory-search" type="search" placeholder="নাম বা ইমেইল দিয়ে খুঁজুন"><div id="adminUsersList" class="admin-list"><p class="muted">তথ্য লোড হয়নি।</p></div></section>
+        <section id="adminVerificationSection" class="panel admin-section"><div class="section-heading"><div><h3>ভেরিফিকেশন আবেদন</h3><p class="muted">আবেদন যাচাই করে অনুমোদন বা প্রত্যাখ্যান করুন।</p></div></div><div id="adminVerificationList" class="admin-list"><p class="muted">তথ্য লোড হয়নি।</p></div></section>
+        <section id="adminPostsSection" class="panel admin-section"><div class="section-heading"><div><h3>পোস্ট ব্যবস্থাপনা</h3><p class="muted">কমিউনিটি গাইডলাইন ভঙ্গ করা পোস্ট সরান।</p></div></div><div id="adminPostsList" class="admin-list"><p class="muted">তথ্য লোড হয়নি।</p></div></section>
+        <section id="superAdminManagement" class="panel admin-section hidden"><div class="section-heading"><div><h3>অ্যাডমিন নিয়োগ</h3><p class="muted">শুধু Super Admin নতুন অ্যাডমিন নিয়োগ করতে পারবেন।</p></div></div><label for="newAdminEmail">ব্যবহারকারীর নিবন্ধিত ইমেইল</label><input id="newAdminEmail" type="email" placeholder="user@example.com"><label for="newAdminRole">অ্যাডমিনের পদ</label><select id="newAdminRole" class="directory-search"><option value="admin">Admin</option><option value="moderator">Moderator</option><option value="verificationManager">Verification Manager</option></select><button id="assignAdminBtn" class="primary-btn full" type="button">অ্যাডমিন নিয়োগ করুন</button><p id="adminManageMessage" class="status-message"></p><div class="admin-divider"></div><h4>বর্তমান অ্যাডমিন দল</h4><div id="adminStaffList" class="admin-list"><p class="muted">তথ্য লোড হয়নি।</p></div><div class="admin-divider"></div><h4>অ্যাডমিন কার্যক্রমের লগ</h4><div id="adminLogsList" class="admin-list"><p class="muted">তথ্য লোড হয়নি।</p></div></section>
+        <p class="admin-security-note">নিরাপত্তা: এই ড্যাশবোর্ডে প্রবেশাধিকার Firestore Security Rules দ্বারা যাচাই করা হয়। শুধু UI লুকিয়ে রাখা নিরাপত্তা হিসেবে ব্যবহার করা হয় না।</p>
       </section>
 
       <!-- BOTTOM NAVIGATION -->

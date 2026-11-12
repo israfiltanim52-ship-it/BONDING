@@ -1,24 +1,22 @@
 # BONDING — হৃদয়ের বন্ধন
 
-BONDING v0.5 directory and assistant UI update.
+## Admin Dashboard build
+এই build-এ মোবাইল-উপযোগী Admin Dashboard যোগ করা হয়েছে। প্রতিষ্ঠাতা Super Admin; ভবিষ্যতে Admin, Moderator ও Verification Manager নিয়োগ করতে পারবেন।
 
-## এই সংস্করণে
-- Facebook-inspired mobile layout refresh.
-- পাঁচটি bottom navigation: হোম, বন্ধু, চ্যাট, সেটিংস, প্রোফাইল.
-- বন্ধু অনুসন্ধান, friend requests এবং friends list আলাদা Friends পেজে.
-- Friends ও Chats—দুই পেজেই সব নিবন্ধিত ব্যবহারকারীর searchable directory যোগ করা হয়েছে।
-- ডিরেক্টরি থেকে friend request পাঠানো/গ্রহণ এবং সরাসরি নতুন chat শুরু করা যায়।
-- Tanim AI প্যানেলে Project Assistant ও Personal Assistant-এর পৃথক পরিচিতি যোগ করা হয়েছে; AI backend এখনো সংযুক্ত নয়।
-- Profile editing, profile photo এবং cover photo আগের Firebase/Cloudinary implementation-এ রাখা হয়েছে.
-- Settings পেজে verification request, language, logout এবং developer information.
-- ছয়টি accent palette: Ocean Blue, Emerald, Royal Purple, Rose, Sunset, Midnight.
-- Floating Tanim AI launcher UI. AI উত্তর তৈরি করতে নিরাপদ server-side model integration এখনো প্রয়োজন।
+### নিরাপত্তা ও সেটআপ
+- প্রতিষ্ঠাতার UID Firebase Authentication থেকে নিয়ে Firestore `system/adminConfig` ডকুমেন্টে `superAdminUid` হিসেবে একবার সেট করুন।
+- `firestore.rules` Firebase Console-এ Publish করুন।
+- Founder config client-side write থেকে বন্ধ; admin role পরিবর্তন শুধু Super Admin করতে পারবেন।
+- Dashboard অ্যাপের Settings থেকে অনুমোদিত অ্যাকাউন্টে দেখা যাবে; ফোন/কম্পিউটার উভয়েই ব্যবহারযোগ্য।
 
-## গুরুত্বপূর্ণ
-- Firebase project/config আগের `bonding-1aab9`-ই রাখা হয়েছে.
-- Cloudinary cloud name এবং unsigned preset আগের মতো রাখা হয়েছে.
-- Firestore schema/rules এই UI সংস্করণে পরিবর্তন করা হয়নি; নতুন rules publish করার দরকার নেই.
-- আগের Firebase Authentication account ও Firestore data মুছবেন না.
+### বর্তমান ফিচার
+- ব্যবহারকারী তালিকা ও সার্চ
+- পোস্ট moderation (পোস্ট মুছে ফেলা)
+- ভেরিফিকেশন আবেদন অনুমোদন/প্রত্যাখ্যান
+- একাধিক Admin/Moderator/Verification Manager নিয়োগ ও পদ বাতিল
+- Super Admin-এর জন্য admin action log
 
-## GitHub-এ আপডেট
-ZIP Extract করে `BONDING-main` ফোল্ডারের ভেতরের ফাইলগুলো repository root-এ upload/replace করুন। `BONDING-main` নামে nested folder তৈরি করবেন না। Commit changes দিন। GitHub Pages আপডেট হলে Ctrl+Shift+R দিয়ে refresh করুন।
+### এখনো বাকি
+অ্যাকাউন্ট suspend/delete (সার্ভার-সাইড Auth Admin SDK/Cloud Functions প্রয়োজন), রিপোর্টিং workflow, comment moderation UI, advanced analytics, এবং পূর্ণ audit-log viewer।
+
+Firebase project ও Cloudinary configuration অপরিবর্তিত। বিদ্যমান user/post/chat ডেটা migration বা delete করা হয় না।
