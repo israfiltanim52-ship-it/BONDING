@@ -16,6 +16,7 @@ import {
   doc,
   setDoc,
   getDoc,
+  deleteDoc,
   collection,
   query,
   where,
@@ -51,7 +52,8 @@ const state = {
   peer: null,
   unsubscribeMessages: null,
   unsubscribeChats: null,
-  unsubscribeFeed: null
+  unsubscribeFeed: null,
+  postUnsubs: []
 };
 
 const translations = {
@@ -605,12 +607,102 @@ async function publishPost(event) {
   }
 }
 
+function stopPostListeners() {
+  state.postUnsubs.forEach(unsub => { try { unsub(); } catch (_) {} });
+  state.postUnsubs = [];
+}
+
+async function togglePostReaction(postId, button) {
+  if (!state.user) return showToast("রিঅ্যাক্ট করতে আগে লগইন করুন।");
+  const reactionRef = doc(db, "posts", postId, "reactions", state.user.uid);
+  try {
+    const existing = await getDoc(reactionRef);
+    if (existing.exists()) await deleteDoc(reactionRef);
+    else await setDoc(reactionRef, {
+      uid: state.user.uid,
+      type: "like",
+      createdAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error("Reaction error:", error);
+    showToast(readableError(error));
+  }
+}
+
+async function copyPostLink(postId) {
+  const link = `${location.origin}${location.pathname}#post-${postId}`;
+  try {
+    if (navigator.share) await navigator.share({ title: "BONDING পোস্ট", url: link });
+    else if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(link);
+      showToast("পোস্টের লিংক কপি হয়েছে।");
+    } else {
+      window.prompt("পোস্টের লিংক কপি করুন:", link);
+    }
+  } catch (error) {
+    if (error?.name !== "AbortError") {
+      try { window.prompt("পোস্টের লিংক কপি করুন:", link); }
+      catch (_) { showToast("লিংক কপি করা যায়নি।"); }
+    }
+  }
+}
+
+function loadPostComments(postId, panel, list) {
+  const commentsQuery = query(
+    collection(db, "posts", postId, "comments"),
+    orderBy("createdAt", "asc"), limit(50)
+  );
+  const unsub = onSnapshot(commentsQuery, snapshot => {
+    list.replaceChildren();
+    if (snapshot.empty) {
+      const empty = document.createElement("p");
+      empty.className = "comment-empty";
+      empty.textContent = "এখনো কোনো মন্তব্য নেই।";
+      list.append(empty);
+      return;
+    }
+    snapshot.forEach(item => {
+      const data = item.data();
+      const row = document.createElement("div");
+      row.className = "comment-item";
+      const author = document.createElement("strong");
+      author.textContent = data.authorName || "ব্যবহারকারী";
+      const text = document.createElement("p");
+      text.textContent = data.text || "";
+      row.append(author, text);
+      list.append(row);
+    });
+  }, error => showToast(readableError(error)));
+  state.postUnsubs.push(unsub);
+}
+
+async function addPostComment(postId, input, button) {
+  const text = input.value.trim();
+  if (!text) return showToast("মন্তব্য লিখুন।");
+  if (text.length > 1000) return showToast("মন্তব্য ১০০০ অক্ষরের মধ্যে রাখুন।");
+  button.disabled = true;
+  try {
+    await addDoc(collection(db, "posts", postId, "comments"), {
+      uid: state.user.uid,
+      authorName: state.user.displayName || state.user.email?.split("@")[0] || "BONDING ব্যবহারকারী",
+      text,
+      createdAt: serverTimestamp()
+    });
+    input.value = "";
+  } catch (error) {
+    console.error("Comment error:", error);
+    showToast(readableError(error));
+  } finally { button.disabled = false; }
+}
+
 function listenToFeed() {
   if (state.unsubscribeFeed) state.unsubscribeFeed();
+  stopPostListeners();
   const feedQuery = query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(30));
   state.unsubscribeFeed = onSnapshot(feedQuery, snapshot => {
     const feed = $("feedList");
     if (!feed) return;
+    stopPostListeners();
     feed.replaceChildren();
     if (snapshot.empty) {
       const empty = document.createElement("div");
@@ -620,9 +712,11 @@ function listenToFeed() {
       return;
     }
     snapshot.forEach(item => {
+      const postId = item.id;
       const post = item.data();
       const card = document.createElement("article");
       card.className = "post-card";
+      card.id = `post-${postId}`;
       const head = document.createElement("div");
       head.className = "post-head";
       const avatar = document.createElement("div");
@@ -640,10 +734,74 @@ function listenToFeed() {
       body.className = "post-body";
       body.textContent = post.text || "";
       card.append(head, body);
+
+      const stats = document.createElement("div");
+      stats.className = "post-stats";
+      const reactionCount = document.createElement("span");
+      reactionCount.textContent = "♡ ০";
+      const commentCount = document.createElement("span");
+      commentCount.textContent = "০ মন্তব্য";
+      stats.append(reactionCount, commentCount);
+      card.append(stats);
+
+      const actions = document.createElement("div");
+      actions.className = "post-actions";
+      const likeBtn = document.createElement("button");
+      likeBtn.type = "button"; likeBtn.className = "post-action"; likeBtn.textContent = "♡ রিঅ্যাক্ট";
+      likeBtn.addEventListener("click", () => togglePostReaction(postId, likeBtn));
+      const commentBtn = document.createElement("button");
+      commentBtn.type = "button"; commentBtn.className = "post-action"; commentBtn.textContent = "💬 কমেন্ট";
+      const shareBtn = document.createElement("button");
+      shareBtn.type = "button"; shareBtn.className = "post-action"; shareBtn.textContent = "↗ শেয়ার";
+      shareBtn.addEventListener("click", () => copyPostLink(postId));
+      const copyBtn = document.createElement("button");
+      copyBtn.type = "button"; copyBtn.className = "post-action"; copyBtn.textContent = "🔗 কপি লিংক";
+      copyBtn.addEventListener("click", async () => {
+        const link = `${location.origin}${location.pathname}#post-${postId}`;
+        try { await navigator.clipboard.writeText(link); showToast("পোস্টের লিংক কপি হয়েছে।"); }
+        catch (_) { window.prompt("পোস্টের লিংক কপি করুন:", link); }
+      });
+      actions.append(likeBtn, commentBtn, shareBtn, copyBtn);
+      card.append(actions);
+
+      const commentPanel = document.createElement("section");
+      commentPanel.className = "comments-panel hidden";
+      const commentList = document.createElement("div");
+      commentList.className = "comment-list";
+      const commentForm = document.createElement("form");
+      commentForm.className = "comment-form";
+      const commentInput = document.createElement("input");
+      commentInput.type = "text"; commentInput.maxLength = 1000; commentInput.placeholder = "মন্তব্য লিখুন…";
+      const sendBtn = document.createElement("button");
+      sendBtn.type = "submit"; sendBtn.className = "primary-btn"; sendBtn.textContent = "পাঠান";
+      commentForm.append(commentInput, sendBtn);
+      commentPanel.append(commentList, commentForm);
+      card.append(commentPanel);
+      let commentsLoaded = false;
+      commentBtn.addEventListener("click", () => {
+        commentPanel.classList.toggle("hidden");
+        if (!commentsLoaded) { loadPostComments(postId, commentPanel, commentList); commentsLoaded = true; }
+      });
+      commentForm.addEventListener("submit", event => {
+        event.preventDefault(); addPostComment(postId, commentInput, sendBtn);
+      });
+
+      const reactionQuery = collection(db, "posts", postId, "reactions");
+      const reactionUnsub = onSnapshot(reactionQuery, reactionSnap => {
+        reactionCount.textContent = `♥ ${reactionSnap.size.toLocaleString("bn-BD")}`;
+        const mine = reactionSnap.docs.some(d => d.id === state.user?.uid);
+        likeBtn.classList.toggle("is-reacted", mine);
+        likeBtn.textContent = mine ? "♥ রিঅ্যাক্ট করেছেন" : "♡ রিঅ্যাক্ট";
+      }, error => console.error("Reaction listener:", error));
+      state.postUnsubs.push(reactionUnsub);
+      const countUnsub = onSnapshot(query(collection(db, "posts", postId, "comments")), snap => {
+        commentCount.textContent = `${snap.size.toLocaleString("bn-BD")} মন্তব্য`;
+      }, error => console.error("Comment count listener:", error));
+      state.postUnsubs.push(countUnsub);
+
       if (post.authorId === state.user?.uid) {
         const own = document.createElement("small");
-        own.className = "post-own-label";
-        own.textContent = "আপনার পোস্ট";
+        own.className = "post-own-label"; own.textContent = "আপনার পোস্ট";
         card.append(own);
       }
       feed.append(card);

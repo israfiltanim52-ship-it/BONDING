@@ -367,3 +367,18 @@ body{background:radial-gradient(ellipse at 90% -10%,rgba(180,210,255,.34),transp
 @media(max-width:520px){.post-compose-foot{align-items:flex-start;flex-direction:column}.post-compose-foot .primary-btn{width:100%}}
 .nav-item.active{color:#145dbf;background:#e8f1ff}
 .nav-item:focus-visible{outline:3px solid rgba(24,119,242,.25);outline-offset:2px}
+
+/* Post interactions */
+.post-stats{display:flex;justify-content:space-between;gap:12px;padding:10px 2px 8px;color:var(--muted);font-size:11px;border-bottom:1px solid var(--line)}
+.post-actions{display:flex;align-items:center;justify-content:space-between;gap:5px;padding-top:9px;flex-wrap:wrap}
+.post-action{border:0;background:transparent;color:var(--muted);padding:9px 8px;border-radius:10px;font-size:11px;font-weight:700;transition:.18s}
+.post-action:hover,.post-action.is-reacted{background:var(--green-soft);color:var(--green-dark)}
+.comments-panel{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.comment-list{display:flex;flex-direction:column;gap:8px;max-height:240px;overflow:auto}
+.comment-item{background:var(--surface-2);border-radius:12px;padding:9px 11px}
+.comment-item strong{font-size:11px;color:var(--green-dark)}
+.comment-item p{margin:3px 0 0;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.comment-empty{font-size:11px;color:var(--muted);text-align:center}
+.comment-form{display:flex;gap:8px;margin-top:10px}
+.comment-form input{min-width:0;flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface-2);color:var(--text)}
+.comment-form .primary-btn{padding:9px 13px}
