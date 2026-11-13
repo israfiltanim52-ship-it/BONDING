@@ -578,3 +578,59 @@ body[data-theme="dark"] .theme-choice{background:var(--surface);color:var(--text
  .admin-toolbar button{font-size:11px;padding:9px 10px}
  .admin-section{padding:14px}
 }
+
+
+/* Tanim AI — Instagram-inspired dark / pink / soft coral identity */
+.tanim-ai-fab{
+  background:linear-gradient(120deg,#171017 0%,#b82d72 55%,#ff786f 100%);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 10px 30px rgba(190,45,114,.34),0 0 0 1px rgba(255,120,111,.10);
+}
+.tanim-ai-fab:hover{filter:brightness(1.08);transform:translateY(-2px)}
+.tanim-ai-panel{
+  background:linear-gradient(155deg,#171217 0%,#24131f 58%,#30151f 100%);
+  color:#fff;
+  border:1px solid rgba(255,125,157,.32);
+  box-shadow:0 22px 60px rgba(0,0,0,.48),0 0 28px rgba(224,65,132,.13);
+}
+.ai-panel-head{
+  padding:2px 0 12px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+.ai-panel-head>div{display:flex;flex-direction:column;gap:4px}
+.ai-panel-head strong{
+  font-size:16px;
+  letter-spacing:.2px;
+  background:linear-gradient(90deg,#ff9bc1,#ff8b79);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.ai-panel-head small{color:#e8b8cb;font-size:11px}
+.ai-panel-head button{
+  background:rgba(255,255,255,.10);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.12);
+}
+.ai-mode-grid{display:grid;gap:10px;margin:13px 0}
+.ai-mode-card{
+  padding:12px;
+  border-radius:14px;
+  background:linear-gradient(120deg,rgba(194,47,116,.22),rgba(255,120,111,.10));
+  border:1px solid rgba(255,145,177,.22);
+}
+.ai-mode-card strong{display:block;color:#fff;font-size:12px}
+.ai-mode-card p{color:#e9c9d6;margin:6px 0 0}
+.ai-mode-icon{
+  display:grid;place-items:center;width:29px;height:29px;margin-bottom:8px;
+  border-radius:10px;color:#fff;font-size:17px;
+  background:linear-gradient(135deg,#d83e8b,#ff8176);
+  box-shadow:0 5px 14px rgba(216,62,139,.25);
+}
+.ai-coming{
+  color:#ffe4ec;
+  background:linear-gradient(110deg,rgba(196,46,117,.24),rgba(255,124,111,.16));
+  border:1px solid rgba(255,145,177,.24);
+}
+@media(prefers-reduced-motion:no-preference){
+  .tanim-ai-fab{transition:transform .2s ease,filter .2s ease,box-shadow .2s ease}
+}
