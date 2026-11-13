@@ -1404,7 +1404,7 @@ async function reviewVerification(uid, approve) {
     }, {merge:true});
     if (approve) await setDoc(doc(db,"users",uid),{verified:true,updatedAt:serverTimestamp()},{merge:true});
     await writeAdminLog(approve ? "approve_verification" : "reject_verification",uid,action);
-    showToast(`আবেদন ${approve ? "অনুমোদন" : "প্রত্যাখ্যান" করা হয়েছে।`);
+    showToast(`আবেদন ${approve ? "অনুমোদন" : "প্রত্যাখ্যান"} করা হয়েছে।`);
     await refreshAdminDashboard();
   } catch(error) { console.error(error); showToast(readableError(error)); }
 }
