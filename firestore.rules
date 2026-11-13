@@ -122,7 +122,13 @@ service cloud.firestore {
           && request.resource.data.text is string && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 4000
           && request.resource.data.keys().hasOnly(['senderId','senderName','text','createdAt']);
-        allow update, delete: if false;
+        // Only the other chat member may add delivery/read timestamps; message content stays immutable.
+        allow update: if isChatMember(chatId)
+          && request.auth.uid != resource.data.senderId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deliveredAt','readAt'])
+          && (!('deliveredAt' in request.resource.data) || request.resource.data.deliveredAt is timestamp)
+          && (!('readAt' in request.resource.data) || request.resource.data.readAt is timestamp);
+        allow delete: if false;
       }
     }
   }

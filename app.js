@@ -22,6 +22,7 @@ import {
   where,
   getDocs,
   addDoc,
+  updateDoc,
   orderBy,
   onSnapshot,
   serverTimestamp,
@@ -471,23 +472,38 @@ async function openConversation(peer) {
 
       snapshot.forEach(item => {
         const data = item.data();
+        const mine = data.senderId === state.user.uid;
         const bubble = document.createElement("div");
-        bubble.className = data.senderId === state.user.uid ? "message mine" : "message";
+        bubble.className = mine ? "message mine" : "message";
 
         const text = document.createElement("div");
         text.textContent = data.text || "";
         bubble.append(text);
 
-        const time = document.createElement("small");
-        time.className = "msg-meta";
-        if (data.createdAt?.toDate) {
-          time.textContent = data.createdAt.toDate().toLocaleTimeString(
-            state.lang === "bn" ? "bn-BD" : "en-US",
-            { hour: "2-digit", minute: "2-digit" }
-          );
-        }
-        bubble.append(time);
+        const meta = document.createElement("small");
+        meta.className = "msg-meta";
+        const timeText = data.createdAt?.toDate
+          ? data.createdAt.toDate().toLocaleTimeString(
+              state.lang === "bn" ? "bn-BD" : "en-US",
+              { hour: "2-digit", minute: "2-digit" }
+            )
+          : "";
+        const receiptText = mine
+          ? (data.readAt ? (state.lang === "bn" ? " · দেখা হয়েছে ✓✓" : " · Seen ✓✓")
+            : data.deliveredAt ? (state.lang === "bn" ? " · পৌঁছেছে ✓" : " · Delivered ✓")
+            : (state.lang === "bn" ? " · পাঠানো হয়েছে ✓" : " · Sent ✓"))
+          : "";
+        meta.textContent = timeText + receiptText;
+        bubble.append(meta);
         container.append(bubble);
+
+        // The recipient's open conversation marks incoming messages delivered and read.
+        if (!mine && (!data.deliveredAt || !data.readAt)) {
+          updateDoc(item.ref, {
+            ...(data.deliveredAt ? {} : { deliveredAt: serverTimestamp() }),
+            ...(data.readAt ? {} : { readAt: serverTimestamp() })
+          }).catch(error => console.warn("Message receipt update:", error));
+        }
       });
 
       container.scrollTop = container.scrollHeight;
