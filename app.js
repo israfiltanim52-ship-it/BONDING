@@ -688,21 +688,33 @@ function listenToChats(user) {
 async function publishPost(event) {
   event.preventDefault();
   const input = $("postText");
-  const text = input?.value.trim();
+  const imageInput = $("postImageInput");
+  const file = imageInput?.files?.[0] || null;
+  const text = input?.value.trim() || "";
   if (!state.user) return showToast("পোস্ট করতে আগে লগইন করুন।");
-  if (!text) return status($("postMessage"), "পোস্টের লেখা লিখুন।", true);
+  if (!text && !file) return status($("postMessage"), "লেখা লিখুন অথবা একটি ছবি যোগ করুন।", true);
+  if (text.length > 3000) return status($("postMessage"), "পোস্ট ৩০০০ অক্ষরের মধ্যে রাখুন।", true);
 
   const button = $("publishPost");
   if (button) button.disabled = true;
-  status($("postMessage"), "পোস্ট প্রকাশ হচ্ছে…");
+  status($("postMessage"), file ? "ছবি আপলোড ও পোস্ট প্রকাশ হচ্ছে…" : "পোস্ট প্রকাশ হচ্ছে…");
   try {
+    let imageUrl = "";
+    if (file) imageUrl = await uploadBondingImage(file);
     await addDoc(collection(db, "posts"), {
       authorId: state.user.uid,
       authorName: state.user.displayName || state.user.email?.split("@")[0] || "BONDING ব্যবহারকারী",
       text,
+      ...(imageUrl ? { imageUrl, imageType: file.type } : {}),
       createdAt: serverTimestamp()
     });
     input.value = "";
+    if (imageInput) imageInput.value = "";
+    const previewWrap = $("postImagePreviewWrap");
+    if (previewWrap) previewWrap.classList.add("hidden");
+    const preview = $("postImagePreview");
+    if (preview) preview.removeAttribute("src");
+    $("removePostImage")?.classList.add("hidden");
     status($("postMessage"), "আপনার পোস্ট প্রকাশিত হয়েছে।");
   } catch (error) {
     console.error("Publish post error:", error);
@@ -710,6 +722,32 @@ async function publishPost(event) {
   } finally {
     if (button) button.disabled = false;
   }
+}
+
+function updatePostImagePreview() {
+  const input = $("postImageInput");
+  const file = input?.files?.[0];
+  const wrap = $("postImagePreviewWrap");
+  const preview = $("postImagePreview");
+  if (!file) {
+    wrap?.classList.add("hidden");
+    if (preview) preview.removeAttribute("src");
+    $("removePostImage")?.classList.add("hidden");
+    return;
+  }
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    input.value = "";
+    showToast("শুধু JPG, PNG অথবা WebP ছবি নির্বাচন করুন।");
+    return;
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    input.value = "";
+    showToast("ছবির আকার ৫ MB-এর কম হতে হবে।");
+    return;
+  }
+  if (preview) preview.src = URL.createObjectURL(file);
+  wrap?.classList.remove("hidden");
+  $("removePostImage")?.classList.remove("hidden");
 }
 
 function stopPostListeners() {
@@ -844,7 +882,19 @@ function listenToFeed() {
       const body = document.createElement("p");
       body.className = "post-body";
       body.textContent = post.text || "";
-      card.append(head, body);
+      card.append(head);
+      if (post.text) card.append(body);
+      if (post.imageUrl) {
+        const media = document.createElement("div");
+        media.className = "post-media";
+        const image = document.createElement("img");
+        image.src = post.imageUrl;
+        image.alt = "পোস্টে শেয়ার করা ছবি";
+        image.loading = "lazy";
+        image.addEventListener("error", () => media.remove(), { once: true });
+        media.append(image);
+        card.append(media);
+      }
 
       const stats = document.createElement("div");
       stats.className = "post-stats";
@@ -1627,6 +1677,12 @@ $("userSearch")?.addEventListener("keydown", event => {
 
 $("messageForm")?.addEventListener("submit", sendMessage);
 $("postForm")?.addEventListener("submit", publishPost);
+$("postImageInput")?.addEventListener("change", updatePostImagePreview);
+$("removePostImage")?.addEventListener("click", () => {
+  const input = $("postImageInput");
+  if (input) input.value = "";
+  updatePostImagePreview();
+});
 
 $("backToChats")?.addEventListener("click", () => openPage("chatsPage"));
 

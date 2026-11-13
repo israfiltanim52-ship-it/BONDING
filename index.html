@@ -110,6 +110,16 @@
           <div class="section-heading"><h3>মনের কথা লিখুন</h3><span class="pill">BONDING FEED</span></div>
           <form id="postForm">
             <textarea id="postText" maxlength="3000" rows="3" placeholder="আপনার মনে কী চলছে?"></textarea>
+            <div class="post-media-tools">
+              <label class="post-photo-picker" for="postImageInput">
+                <span aria-hidden="true">▧</span> ছবি যোগ করুন
+              </label>
+              <input id="postImageInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+              <button class="text-btn hidden" type="button" id="removePostImage">ছবি সরান</button>
+            </div>
+            <div id="postImagePreviewWrap" class="post-image-preview-wrap hidden">
+              <img id="postImagePreview" alt="পোস্টের ছবির প্রিভিউ">
+            </div>
             <div class="post-compose-foot"><small>সবার সঙ্গে সুন্দর ও সম্মানজনক আচরণ করুন।</small><button class="primary-btn" type="submit" id="publishPost">পোস্ট প্রকাশ করুন</button></div>
             <p id="postMessage" class="status-message" role="status"></p>
           </form>

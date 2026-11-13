@@ -872,3 +872,65 @@ body,button,input,textarea,select{
   outline-offset: 3px;
 }
 .social-identity-chat:active { transform: scale(.985); }
+
+
+/* BONDING Home Feed refresh — Facebook-inspired layout with BONDING night colors */
+.feed-composer.panel,
+.post-card {
+  background: linear-gradient(155deg, #1b1021 0%, #110d17 72%, #19101d 100%);
+  border: 1px solid rgba(245, 65, 155, .28);
+  color: #fff;
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.22);
+}
+.feed-composer .section-heading h3,
+.post-author strong { color: #fff; }
+.feed-composer textarea {
+  background: #0e0a12;
+  color: #fff;
+  border: 1px solid rgba(239, 74, 164, .38);
+  border-radius: 16px;
+}
+.feed-composer textarea::placeholder { color: #c7a9c2; }
+.post-compose-foot small,
+.post-author small,
+.post-stats { color: #c9b4c7; }
+.post-media-tools { display:flex; align-items:center; gap:12px; margin-top:12px; }
+.post-photo-picker {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 14px; border-radius:13px; cursor:pointer;
+  color:#fff; font-weight:700; font-size:12px;
+  background:linear-gradient(110deg,#8b22d1,#e12c91,#ff626f);
+  border:1px solid rgba(255,255,255,.12);
+}
+.post-photo-picker span { font-size:18px; }
+.post-image-preview-wrap {
+  margin-top:12px; overflow:hidden; border-radius:16px;
+  border:1px solid rgba(245,65,155,.35); max-height:300px;
+}
+.post-image-preview-wrap img { display:block; width:100%; max-height:300px; object-fit:contain; background:#08070b; }
+.post-media { margin:8px -17px 12px; overflow:hidden; background:#08070b; }
+.post-media img { display:block; width:100%; max-height:620px; object-fit:contain; }
+.post-body { color:#fff; }
+.post-own-label { color:#ff83c5; }
+.post-stats { border-color:rgba(255,255,255,.12); }
+.post-actions { border-top:1px solid rgba(255,255,255,.10); margin-top:5px; }
+.post-action { color:#e8dce9; }
+.post-action svg { width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; vertical-align:middle; }
+.post-action:hover,.post-action.is-reacted { color:#ff62ae; background:rgba(232,45,148,.14); }
+.post-action.is-reacted svg { fill:rgba(255,77,160,.22); }
+.comments-panel { border-color:rgba(255,255,255,.14); }
+.comment-item { background:#211426; }
+.comment-item strong { color:#ff83c5; }
+.comment-item p { color:#fff; }
+.comment-form input { background:#0e0a12; color:#fff; border-color:rgba(239,74,164,.35); }
+.post-card .avatar { border:2px solid #e83c9c; }
+@media(max-width:600px) {
+  .feed-composer.panel,.post-card { border-radius:16px; }
+  .post-media { margin-left:-14px; margin-right:-14px; }
+  .post-action { padding:9px 5px; font-size:10px; }
+}
+
+/* Keep the home screen focused on the social feed, like the supplied reference */
+#homePage .feature-card,
+#homePage .notice-card { display:none !important; }
