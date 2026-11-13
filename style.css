@@ -857,3 +857,18 @@ body,button,input,textarea,select{
   background:linear-gradient(135deg,rgba(45,24,48,.88),rgba(34,19,35,.92))!important;
   border:1px dashed rgba(237,85,181,.38)!important;
 }
+
+
+/* Accepted-friend identity opens the conversation; no redundant Chat button. */
+.social-identity-chat {
+  cursor: pointer;
+  border-radius: 14px;
+  transition: background .18s ease, transform .18s ease;
+}
+.social-identity-chat:hover,
+.social-identity-chat:focus-visible {
+  background: rgba(236, 72, 153, .10);
+  outline: 2px solid rgba(236, 72, 153, .45);
+  outline-offset: 3px;
+}
+.social-identity-chat:active { transform: scale(.985); }

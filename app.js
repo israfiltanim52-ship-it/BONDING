@@ -1238,7 +1238,6 @@ async function renderUserDirectory(containerId, searchValue = "", forceRefresh =
       const actions = [];
       if (rel?.status === "accepted") {
         actions.push({label:"বন্ধু",cls:"outline-btn",run:()=>showToast("আপনি ইতিমধ্যে বন্ধু।")});
-        actions.push({label:"চ্যাট",cls:"primary-btn",run:()=>openConversation({uid:user.uid,name:user.name||"বন্ধু",email:user.email||""})});
       } else if (rel?.status === "pending" && rel.direction === "out") {
         actions.push({label:"অনুরোধ পাঠানো হয়েছে",cls:"outline-btn",run:()=>showToast("উত্তরের অপেক্ষায় আছে।")});
       } else if (rel?.status === "pending" && rel.direction === "in") {
@@ -1247,7 +1246,30 @@ async function renderUserDirectory(containerId, searchValue = "", forceRefresh =
         actions.push({label:"বন্ধু যোগ করুন",cls:"primary-btn",run:async()=>{await sendFriendRequest(user.uid,user);await renderUserDirectory(containerId,$(containerId==="friendsDirectory"?"friendsDirectorySearch":"chatsDirectorySearch")?.value||"",true);}});
       }
       actions.push({label:"প্রোফাইল",cls:"outline-btn",run:()=>showToast(`${user.name||"ব্যবহারকারী"} — ${user.bio||"BONDING সদস্য"}`)});
-      container.append(makeSocialRow(user.name || user.email || "BONDING সদস্য", user.email || "নিবন্ধিত ব্যবহারকারী", actions, user.photoURL || ""));
+      const socialRow = makeSocialRow(user.name || user.email || "BONDING সদস্য", user.email || "নিবন্ধিত ব্যবহারকারী", actions, user.photoURL || "");
+      if (rel?.status === "accepted") {
+        const identity = socialRow.querySelector(".social-identity");
+        if (identity) {
+          identity.classList.add("social-identity-chat");
+          identity.setAttribute("role", "button");
+          identity.setAttribute("tabindex", "0");
+          identity.setAttribute("aria-label", `${user.name || "বন্ধু"}-এর সঙ্গে চ্যাট খুলুন`);
+          const startChat = () => openConversation({
+            uid: user.uid,
+            name: user.name || "বন্ধু",
+            email: user.email || "",
+            photoURL: user.photoURL || ""
+          });
+          identity.addEventListener("click", startChat);
+          identity.addEventListener("keydown", event => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              startChat();
+            }
+          });
+        }
+      }
+      container.append(socialRow);
     });
   } catch (error) {
     console.error("User directory error:", error);
