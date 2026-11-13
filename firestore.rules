@@ -88,13 +88,8 @@ service cloud.firestore {
       allow create: if signedIn() && request.resource.data.authorId == request.auth.uid
         && request.resource.data.authorName is string && request.resource.data.text is string
         && request.resource.data.text.size() <= 3000
-        && request.resource.data.keys().hasOnly(['authorId','authorName','text','createdAt','imageUrl','imageType'])
-        && (request.resource.data.text.size() > 0
-          || ('imageUrl' in request.resource.data && request.resource.data.imageUrl is string))
-        && (!('imageUrl' in request.resource.data)
-          || (request.resource.data.imageUrl is string
-            && request.resource.data.imageUrl.matches('https://res\\.cloudinary\\.com/.*')
-            && request.resource.data.imageType in ['image/jpeg','image/png','image/webp']));
+        && (request.resource.data.text.size() > 0 || ('imageURL' in request.resource.data && request.resource.data.imageURL is string))
+        && request.resource.data.keys().hasOnly(['authorId','authorName','text','imageURL','createdAt']);
       allow update: if false;
       allow delete: if signedIn() && (resource.data.authorId == request.auth.uid || canModeratePosts());
       match /reactions/{userId} {
@@ -125,9 +120,10 @@ service cloud.firestore {
       match /messages/{messageId} {
         allow read: if isChatMember(chatId);
         allow create: if isChatMember(chatId) && request.resource.data.senderId == request.auth.uid
-          && request.resource.data.text is string && request.resource.data.text.size() > 0
-          && request.resource.data.text.size() <= 4000
-          && request.resource.data.keys().hasOnly(['senderId','senderName','text','createdAt']);
+          && request.resource.data.text is string && request.resource.data.text.size() <= 4000
+          && (request.resource.data.text.size() > 0 || ('mediaUrl' in request.resource.data && request.resource.data.mediaUrl is string))
+          && request.resource.data.keys().hasOnly(['senderId','senderName','text','mediaUrl','mediaType','createdAt'])
+          && (!('mediaType' in request.resource.data) || request.resource.data.mediaType in ['image','video']);
         // Only the other chat member may add delivery/read timestamps; message content stays immutable.
         allow update: if isChatMember(chatId)
           && request.auth.uid != resource.data.senderId

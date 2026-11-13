@@ -476,9 +476,22 @@ async function openConversation(peer) {
         const bubble = document.createElement("div");
         bubble.className = mine ? "message mine" : "message";
 
-        const text = document.createElement("div");
-        text.textContent = data.text || "";
-        bubble.append(text);
+        if (data.mediaUrl && data.mediaType === "image") {
+          const media = document.createElement("img");
+          media.className = "chat-message-image";
+          media.src = data.mediaUrl; media.alt = "পাঠানো ছবি"; media.loading = "lazy";
+          bubble.append(media);
+        } else if (data.mediaUrl && data.mediaType === "video") {
+          const media = document.createElement("video");
+          media.className = "chat-message-video";
+          media.src = data.mediaUrl; media.controls = true; media.playsInline = true;
+          bubble.append(media);
+        }
+        if (data.text) {
+          const text = document.createElement("div");
+          text.textContent = data.text;
+          bubble.append(text);
+        }
 
         const meta = document.createElement("small");
         meta.className = "msg-meta";
@@ -522,8 +535,9 @@ async function sendMessage(event) {
 
   const input = $("messageInput");
   const text = input?.value.trim();
+  const mediaFile = $("chatMediaFile")?.files?.[0] || null;
 
-  if (!text || !state.user || !state.peer) {
+  if ((!text && !mediaFile) || !state.user || !state.peer) {
     if (!state.peer) showToast("আগে একজন বন্ধুর চ্যাট খুলুন।");
     return;
   }
@@ -533,8 +547,14 @@ async function sendMessage(event) {
 
   try {
     const id = chatIdFor(state.user.uid, state.peer.uid);
+    let media = null;
+    if (mediaFile) {
+      showToast("মিডিয়া আপলোড হচ্ছে…");
+      media = await uploadBondingMedia(mediaFile);
+    }
     await addDoc(collection(db, "chats", id, "messages"), {
-      text,
+      text: text || "",
+      ...(media ? { mediaUrl: media.url, mediaType: media.type } : {}),
       senderId: state.user.uid,
       senderName: state.user.displayName || state.user.email,
       createdAt: serverTimestamp()
@@ -542,11 +562,12 @@ async function sendMessage(event) {
 
     await setDoc(doc(db, "chats", id), {
       members: [state.user.uid, state.peer.uid].sort(),
-      lastMessage: text,
+      lastMessage: text || (media?.type === "video" ? "ভিডিও" : "ছবি"),
       updatedAt: serverTimestamp()
     }, { merge: true });
 
     input.value = "";
+    if ($("chatMediaFile")) $("chatMediaFile").value = "";
   } catch (error) {
     console.error("Send message error:", error);
     showToast(readableError(error));
@@ -688,33 +709,31 @@ function listenToChats(user) {
 async function publishPost(event) {
   event.preventDefault();
   const input = $("postText");
-  const imageInput = $("postImageInput");
-  const file = imageInput?.files?.[0] || null;
-  const text = input?.value.trim() || "";
+  const text = input?.value.trim();
   if (!state.user) return showToast("পোস্ট করতে আগে লগইন করুন।");
-  if (!text && !file) return status($("postMessage"), "লেখা লিখুন অথবা একটি ছবি যোগ করুন।", true);
-  if (text.length > 3000) return status($("postMessage"), "পোস্ট ৩০০০ অক্ষরের মধ্যে রাখুন।", true);
+  const imageFile = $("postImageFile")?.files?.[0] || null;
+  if (!text && !imageFile) return status($("postMessage"), "লেখা অথবা একটি ছবি যোগ করুন।", true);
 
   const button = $("publishPost");
   if (button) button.disabled = true;
-  status($("postMessage"), file ? "ছবি আপলোড ও পোস্ট প্রকাশ হচ্ছে…" : "পোস্ট প্রকাশ হচ্ছে…");
+  status($("postMessage"), "পোস্ট প্রকাশ হচ্ছে…");
   try {
-    let imageUrl = "";
-    if (file) imageUrl = await uploadBondingImage(file);
+    let imageURL = "";
+    if (imageFile) {
+      status($("postMessage"), "ছবি আপলোড হচ্ছে…");
+      imageURL = await uploadBondingImage(imageFile);
+    }
     await addDoc(collection(db, "posts"), {
       authorId: state.user.uid,
       authorName: state.user.displayName || state.user.email?.split("@")[0] || "BONDING ব্যবহারকারী",
       text,
-      ...(imageUrl ? { imageUrl, imageType: file.type } : {}),
+      ...(imageURL ? { imageURL } : {}),
       createdAt: serverTimestamp()
     });
     input.value = "";
-    if (imageInput) imageInput.value = "";
-    const previewWrap = $("postImagePreviewWrap");
-    if (previewWrap) previewWrap.classList.add("hidden");
-    const preview = $("postImagePreview");
-    if (preview) preview.removeAttribute("src");
-    $("removePostImage")?.classList.add("hidden");
+    if ($("postImageFile")) $("postImageFile").value = "";
+    if ($("postImagePreview")) $("postImagePreview").classList.add("hidden");
+    if ($("postImageName")) $("postImageName").textContent = "ছবি নির্বাচন করা হয়নি";
     status($("postMessage"), "আপনার পোস্ট প্রকাশিত হয়েছে।");
   } catch (error) {
     console.error("Publish post error:", error);
@@ -722,32 +741,6 @@ async function publishPost(event) {
   } finally {
     if (button) button.disabled = false;
   }
-}
-
-function updatePostImagePreview() {
-  const input = $("postImageInput");
-  const file = input?.files?.[0];
-  const wrap = $("postImagePreviewWrap");
-  const preview = $("postImagePreview");
-  if (!file) {
-    wrap?.classList.add("hidden");
-    if (preview) preview.removeAttribute("src");
-    $("removePostImage")?.classList.add("hidden");
-    return;
-  }
-  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-    input.value = "";
-    showToast("শুধু JPG, PNG অথবা WebP ছবি নির্বাচন করুন।");
-    return;
-  }
-  if (file.size > MAX_IMAGE_BYTES) {
-    input.value = "";
-    showToast("ছবির আকার ৫ MB-এর কম হতে হবে।");
-    return;
-  }
-  if (preview) preview.src = URL.createObjectURL(file);
-  wrap?.classList.remove("hidden");
-  $("removePostImage")?.classList.remove("hidden");
 }
 
 function stopPostListeners() {
@@ -882,18 +875,14 @@ function listenToFeed() {
       const body = document.createElement("p");
       body.className = "post-body";
       body.textContent = post.text || "";
-      card.append(head);
-      if (post.text) card.append(body);
-      if (post.imageUrl) {
-        const media = document.createElement("div");
-        media.className = "post-media";
-        const image = document.createElement("img");
-        image.src = post.imageUrl;
-        image.alt = "পোস্টে শেয়ার করা ছবি";
-        image.loading = "lazy";
-        image.addEventListener("error", () => media.remove(), { once: true });
-        media.append(image);
-        card.append(media);
+      card.append(head, body);
+      if (post.imageURL) {
+        const postImage = document.createElement("img");
+        postImage.className = "feed-post-image";
+        postImage.src = post.imageURL;
+        postImage.alt = "পোস্টের ছবি";
+        postImage.loading = "lazy";
+        card.append(postImage);
       }
 
       const stats = document.createElement("div");
@@ -1033,18 +1022,27 @@ async function uploadBondingImage(file) {
   const allowed = ["image/jpeg", "image/png", "image/webp"];
   if (!allowed.includes(file.type)) throw new Error("শুধু JPG, PNG অথবা WebP ছবি আপলোড করা যাবে।");
   if (file.size > MAX_IMAGE_BYTES) throw new Error("ছবির আকার ৫ MB-এর কম হতে হবে।");
+  return uploadBondingMedia(file);
+}
+
+async function uploadBondingMedia(file) {
+  if (!file) throw new Error("ফাইল নির্বাচন করুন।");
+  const isImage = file.type.startsWith("image/");
+  const isVideo = file.type.startsWith("video/");
+  if (!isImage && !isVideo) throw new Error("শুধু ছবি অথবা ভিডিও পাঠানো যাবে।");
+  const maxBytes = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+  if (file.size > maxBytes) throw new Error(isVideo ? "ভিডিও ৫০ MB-এর কম হতে হবে।" : "ছবি ১০ MB-এর কম হতে হবে।");
   const form = new FormData();
   form.append("file", file);
   form.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-  const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-    method: "POST", body: form
-  });
+  const resourceType = isVideo ? "video" : "image";
+  const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`, { method: "POST", body: form });
   const result = await response.json();
   if (!response.ok || !result.secure_url) {
-    console.error("Cloudinary upload failed:", result);
-    throw new Error(result.error?.message || "ছবি আপলোড করা যায়নি।");
+    console.error("Cloudinary media upload failed:", result);
+    throw new Error(result.error?.message || "মিডিয়া আপলোড করা যায়নি। Cloudinary preset পরীক্ষা করুন।");
   }
-  return result.secure_url;
+  return { url: result.secure_url, type: isVideo ? "video" : "image" };
 }
 
 async function loadMyProfile() {
@@ -1677,11 +1675,19 @@ $("userSearch")?.addEventListener("keydown", event => {
 
 $("messageForm")?.addEventListener("submit", sendMessage);
 $("postForm")?.addEventListener("submit", publishPost);
-$("postImageInput")?.addEventListener("change", updatePostImagePreview);
-$("removePostImage")?.addEventListener("click", () => {
-  const input = $("postImageInput");
-  if (input) input.value = "";
-  updatePostImagePreview();
+$("chatMediaBtn")?.addEventListener("click", () => $("chatMediaFile")?.click());
+$("chatMediaFile")?.addEventListener("change", () => {
+  const file = $("chatMediaFile")?.files?.[0];
+  if (file) showToast(`নির্বাচিত: ${file.name} — পাঠাতে Send চাপুন।`);
+});
+$("postImageFile")?.addEventListener("change", () => {
+  const file = $("postImageFile")?.files?.[0];
+  const preview = $("postImagePreview");
+  if (!file || !preview) return;
+  if (!file.type.startsWith("image/")) { showToast("শুধু ছবি নির্বাচন করুন।"); $("postImageFile").value = ""; return; }
+  preview.src = URL.createObjectURL(file);
+  preview.classList.remove("hidden");
+  $("postImageName").textContent = file.name;
 });
 
 $("backToChats")?.addEventListener("click", () => openPage("chatsPage"));

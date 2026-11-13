@@ -111,14 +111,10 @@
           <form id="postForm">
             <textarea id="postText" maxlength="3000" rows="3" placeholder="আপনার মনে কী চলছে?"></textarea>
             <div class="post-media-tools">
-              <label class="post-photo-picker" for="postImageInput">
-                <span aria-hidden="true">▧</span> ছবি যোগ করুন
-              </label>
-              <input id="postImageInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
-              <button class="text-btn hidden" type="button" id="removePostImage">ছবি সরান</button>
-            </div>
-            <div id="postImagePreviewWrap" class="post-image-preview-wrap hidden">
-              <img id="postImagePreview" alt="পোস্টের ছবির প্রিভিউ">
+              <label class="media-pick-btn" for="postImageFile">▧ ছবি যোগ করুন</label>
+              <input id="postImageFile" type="file" accept="image/*" hidden>
+              <span id="postImageName" class="media-file-name">ছবি নির্বাচন করা হয়নি</span>
+              <img id="postImagePreview" class="post-image-preview hidden" alt="পোস্ট ছবির প্রিভিউ">
             </div>
             <div class="post-compose-foot"><small>সবার সঙ্গে সুন্দর ও সম্মানজনক আচরণ করুন।</small><button class="primary-btn" type="submit" id="publishPost">পোস্ট প্রকাশ করুন</button></div>
             <p id="postMessage" class="status-message" role="status"></p>
@@ -243,8 +239,8 @@
         </div>
 
         <form id="messageForm" class="composer">
-          <button type="button" id="voiceBtn"
-            class="icon-btn voice-btn">🎙</button>
+          <button type="button" id="chatMediaBtn" class="icon-btn chat-media-btn" aria-label="ছবি বা ভিডিও পাঠান">＋</button>
+          <input id="chatMediaFile" type="file" accept="image/*,video/*" hidden>
           <input id="messageInput" autocomplete="off"
             maxlength="4000" placeholder="মেসেজ লিখুন…"
             data-i18n-placeholder="messagePlaceholder">
