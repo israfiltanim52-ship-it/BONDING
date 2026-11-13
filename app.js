@@ -842,15 +842,23 @@ function listenToFeed() {
       const actions = document.createElement("div");
       actions.className = "post-actions";
       const likeBtn = document.createElement("button");
-      likeBtn.type = "button"; likeBtn.className = "post-action"; likeBtn.textContent = "♡ রিঅ্যাক্ট";
+      likeBtn.type = "button"; likeBtn.className = "post-action";
+      likeBtn.setAttribute("aria-label", "লাইক");
+      likeBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.7c0 5.1-8.8 10.1-8.8 10.1S3.2 13.8 3.2 8.7A4.7 4.7 0 0 1 12 6.2a4.7 4.7 0 0 1 8.8 2.5Z"/></svg><span>লাইক</span>';
       likeBtn.addEventListener("click", () => togglePostReaction(postId, likeBtn));
       const commentBtn = document.createElement("button");
-      commentBtn.type = "button"; commentBtn.className = "post-action"; commentBtn.textContent = "💬 কমেন্ট";
+      commentBtn.type = "button"; commentBtn.className = "post-action";
+      commentBtn.setAttribute("aria-label", "কমেন্ট");
+      commentBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.8 7.5 8.7 8.7 0 0 1-3.5-.8L4 20l1.3-4.1A7.2 7.2 0 0 1 4.5 12 7.5 7.5 0 0 1 12 4.5h.5A7.5 7.5 0 0 1 20 11.5Z"/></svg><span>কমেন্ট</span>';
       const shareBtn = document.createElement("button");
-      shareBtn.type = "button"; shareBtn.className = "post-action"; shareBtn.textContent = "↗ শেয়ার";
+      shareBtn.type = "button"; shareBtn.className = "post-action";
+      shareBtn.setAttribute("aria-label", "শেয়ার");
+      shareBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m-5 5 5-5 5 5"/><path d="M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/></svg><span>শেয়ার</span>';
       shareBtn.addEventListener("click", () => copyPostLink(postId));
       const copyBtn = document.createElement("button");
-      copyBtn.type = "button"; copyBtn.className = "post-action"; copyBtn.textContent = "🔗 কপি লিংক";
+      copyBtn.type = "button"; copyBtn.className = "post-action";
+      copyBtn.setAttribute("aria-label", "লিংক কপি");
+      copyBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.7 1.7"/><path d="M14 10.5a4 4 0 0 0-5.7 0l-3 3A4 4 0 0 0 11 19.2l1.7-1.7"/></svg><span>কপি লিংক</span>';
       copyBtn.addEventListener("click", async () => {
         const link = `${location.origin}${location.pathname}#post-${postId}`;
         try { await navigator.clipboard.writeText(link); showToast("পোস্টের লিংক কপি হয়েছে।"); }
@@ -1186,6 +1194,8 @@ async function renderUserDirectory(containerId, searchValue = "", forceRefresh =
     const users = await getDirectoryUsers(forceRefresh);
     const term = searchValue.trim().toLocaleLowerCase();
     const filtered = users.filter(user => {
+      // Never show the currently signed-in account as a person to add or message.
+      if (!user.uid || user.uid === state.user.uid) return false;
       const name = (user.name || "").toLocaleLowerCase();
       const email = (user.email || "").toLocaleLowerCase();
       return !term || name.includes(term) || email.includes(term);

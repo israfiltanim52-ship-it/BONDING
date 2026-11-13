@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Tiro+Bangla&display=swap");
 
 :root{
   color-scheme:light;
@@ -26,7 +27,7 @@ body{
     radial-gradient(ellipse at 90% -10%,rgba(169,225,188,.32),transparent 42%),
     radial-gradient(ellipse at -10% 30%,rgba(220,242,226,.55),transparent 38%),
     var(--bg);
-  font-family:Inter,"Hind Siliguri",sans-serif;
+  font-family:Inter,"Tiro Bangla","Hind Siliguri",sans-serif;
   -webkit-font-smoothing:antialiased;
 }
 button,input,textarea,select{font:inherit}
@@ -809,3 +810,50 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 #chatsPage .chat-directory-panel .directory-search{background:#160e1b;color:#fff;border-color:rgba(255,123,185,.2)}
 #chatsPage .chat-directory-panel .directory-list .social-row{background:#26172a;border-color:rgba(255,123,185,.18);color:#fff}
 @media(max-width:520px){#chatsPage .dm-heading h2{font-size:25px}.dm-person{flex-basis:58px;width:58px}.dm-person-avatar{width:54px;height:54px}.dm-chat-list .chat-item-v2{min-height:74px}}
+
+
+/* Typography: Inter remains the English face; Bengali glyphs use Tiro Bangla. */
+body,button,input,textarea,select{
+  font-family:Inter,"Tiro Bangla","Hind Siliguri",sans-serif;
+}
+
+/* Post actions: consistent, accessible outline icon system. */
+.post-actions .post-action{
+  display:inline-flex!important;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  min-height:42px;
+  padding:9px 12px!important;
+  border-radius:12px!important;
+  color:#f0b8d6!important;
+  font-weight:700;
+  transition:background .18s ease,color .18s ease,transform .18s ease;
+}
+.post-actions .post-action svg{
+  width:18px;
+  height:18px;
+  flex:0 0 18px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.post-actions .post-action:first-child svg{fill:transparent}
+.post-actions .post-action:hover{
+  color:#fff!important;
+  background:linear-gradient(110deg,rgba(177,42,222,.28),rgba(235,54,137,.25))!important;
+  transform:translateY(-1px);
+}
+.post-actions .post-action:focus-visible{
+  outline:2px solid #ed55b5;
+  outline-offset:2px;
+}
+
+/* Keep empty chat state aligned with the current dark pink brand. */
+.dm-chat-list .empty-state{
+  color:#e9c4d9!important;
+  background:linear-gradient(135deg,rgba(45,24,48,.88),rgba(34,19,35,.92))!important;
+  border:1px dashed rgba(237,85,181,.38)!important;
+}
