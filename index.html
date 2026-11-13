@@ -94,6 +94,18 @@
           <div class="avatar" id="homeAvatar">B</div>
         </div>
 
+        <section class="story-section" aria-label="BONDING Stories">
+          <div class="section-heading"><h3>স্টোরি</h3><span class="muted">২৪ ঘণ্টা</span></div>
+          <div id="storyBar" class="story-bar">
+            <button type="button" id="addStoryBtn" class="story-item add-story-item">
+              <span class="story-ring"><span id="myStoryAvatar" class="story-avatar">+</span><i>+</i></span>
+              <span>আপনার স্টোরি</span>
+            </button>
+            <div class="empty-story-hint">বন্ধুদের ও সবার স্টোরি এখানে দেখা যাবে।</div>
+          </div>
+          <input id="storyImageFile" type="file" accept="image/*" hidden>
+        </section>
+
         <div class="feature-card">
           <div class="feature-glow"></div>
           <p class="eyebrow">WHERE HEARTS CONNECT</p>
@@ -414,6 +426,32 @@
 
     </section>
   </main>
+
+  <div id="storyViewer" class="story-viewer hidden" role="dialog" aria-modal="true" aria-label="Story viewer">
+    <div class="story-viewer-card">
+      <div id="storyProgress" class="story-progress"></div>
+      <header class="story-viewer-head">
+        <div id="storyViewerAvatar" class="story-viewer-avatar">B</div>
+        <div class="story-viewer-user"><strong id="storyViewerName">BONDING</strong><small id="storyViewerTime"></small></div>
+        <button type="button" id="storyDeleteBtn" class="story-tool-btn hidden" aria-label="স্টোরি মুছুন">🗑</button>
+        <button type="button" id="storyCloseBtn" class="story-tool-btn" aria-label="বন্ধ করুন">×</button>
+      </header>
+      <div id="storyViewerContent" class="story-viewer-content"></div>
+      <div class="story-viewer-foot"><span id="storyViewCount"></span><button type="button" id="storyNextBtn" class="story-tool-btn">পরবর্তী ›</button></div>
+    </div>
+  </div>
+
+  <div id="storyComposer" class="story-composer hidden" role="dialog" aria-modal="true" aria-label="স্টোরি তৈরি">
+    <form id="storyForm" class="story-composer-card">
+      <div class="section-heading"><h3>নতুন স্টোরি</h3><button type="button" id="storyComposerClose" class="story-tool-btn">×</button></div>
+      <textarea id="storyText" maxlength="500" rows="3" placeholder="আপনার মনের কথা লিখুন..."></textarea>
+      <label class="media-pick-btn" for="storyImageFile">▧ ছবি যোগ করুন</label>
+      <img id="storyImagePreview" class="story-image-preview hidden" alt="স্টোরি ছবির প্রিভিউ">
+      <p class="muted">স্টোরি ২৪ ঘণ্টা পর স্বয়ংক্রিয়ভাবে মেয়াদোত্তীর্ণ হবে।</p>
+      <button type="submit" id="publishStoryBtn" class="primary-btn full">স্টোরি প্রকাশ করুন</button>
+      <p id="storyStatus" class="status-message" role="status"></p>
+    </form>
+  </div>
 </div>
 
 <button id="tanimAiButton" class="tanim-ai-fab" type="button" aria-label="Tanim AI খুলুন"><span class="ai-spark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2Z"/><path d="m19 16 .8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z"/></svg></span><small>Tanim AI</small></button>

@@ -1757,6 +1757,128 @@ document.querySelectorAll("[data-chat-tab]").forEach(tab => {
   });
 });
 
+
+/* BONDING Story System 1.0 — public stories expire after 24 hours */
+let unsubscribeStories = null;
+let activeStoryItems = [];
+let activeStoryIndex = 0;
+let activeStoryOwner = null;
+let selectedStoryFile = null;
+
+function storyInitial(name) { return (name || 'B').trim().charAt(0).toUpperCase() || 'B'; }
+function listenToStories() {
+  if (unsubscribeStories) unsubscribeStories();
+  const storiesQuery = query(collection(db, 'stories'), orderBy('createdAt', 'desc'), limit(100));
+  unsubscribeStories = onSnapshot(storiesQuery, snapshot => {
+    const now = Date.now();
+    const valid = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter(story => {
+      const created = story.createdAt?.toDate ? story.createdAt.toDate().getTime() : 0;
+      return created && now - created < 24 * 60 * 60 * 1000;
+    });
+    const latestByUser = new Map();
+    valid.forEach(story => { if (!latestByUser.has(story.uid)) latestByUser.set(story.uid, story); });
+    const bar = $('storyBar');
+    if (!bar) return;
+    bar.querySelectorAll('.story-user-item').forEach(el => el.remove());
+    const empty = bar.querySelector('.empty-story-hint');
+    if (empty) empty.classList.toggle('hidden', latestByUser.size > 0);
+    const mine = valid.filter(story => story.uid === state.user?.uid);
+    const mineAvatar = $('myStoryAvatar');
+    if (mineAvatar) {
+      mineAvatar.textContent = storyInitial(state.user?.displayName || state.user?.email);
+      if (mine[0]?.photoURL) mineAvatar.style.backgroundImage = `url("${mine[0].photoURL}")`;
+    }
+    [...latestByUser.values()].filter(story => story.uid !== state.user?.uid).forEach(story => {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'story-item story-user-item';
+      const ring = document.createElement('span'); ring.className = 'story-ring';
+      const avatar = document.createElement('span'); avatar.className = 'story-avatar';
+      if (story.photoURL) { avatar.style.backgroundImage = `url("${story.photoURL}")`; avatar.textContent = ''; }
+      else avatar.textContent = storyInitial(story.name);
+      ring.append(avatar); button.append(ring);
+      const label = document.createElement('span'); label.textContent = story.name || 'BONDING ব্যবহারকারী'; button.append(label);
+      button.addEventListener('click', () => openStoryForUser(story.uid));
+      bar.append(button);
+    });
+    const addBtn = $('addStoryBtn');
+    if (addBtn) addBtn.onclick = () => $('storyComposer')?.classList.remove('hidden');
+    window.__bondingStories = valid;
+  }, error => { console.error('Stories listener:', error); showToast('স্টোরি লোড করা যায়নি। Firestore Rules পরীক্ষা করুন।'); });
+}
+
+function openStoryForUser(uid) {
+  const all = window.__bondingStories || [];
+  activeStoryItems = all.filter(story => story.uid === uid).sort((a,b) => {
+    const ta = a.createdAt?.toDate?.().getTime() || 0; const tb = b.createdAt?.toDate?.().getTime() || 0; return ta - tb;
+  });
+  activeStoryOwner = uid; activeStoryIndex = 0;
+  if (activeStoryItems.length) showActiveStory();
+}
+
+async function showActiveStory() {
+  const story = activeStoryItems[activeStoryIndex];
+  if (!story) { $('storyViewer')?.classList.add('hidden'); return; }
+  $('storyViewer')?.classList.remove('hidden');
+  $('storyViewerName').textContent = story.name || 'BONDING ব্যবহারকারী';
+  $('storyViewerTime').textContent = story.createdAt?.toDate ? story.createdAt.toDate().toLocaleString(state.lang === 'bn' ? 'bn-BD' : 'en-US') : '';
+  const avatar = $('storyViewerAvatar'); avatar.textContent = storyInitial(story.name);
+  if (story.photoURL) { avatar.style.backgroundImage = `url("${story.photoURL}")`; avatar.textContent = ''; }
+  $('storyDeleteBtn').classList.toggle('hidden', story.uid !== state.user?.uid);
+  $('storyViewerContent').replaceChildren();
+  if (story.imageURL) { const img = document.createElement('img'); img.src = story.imageURL; img.alt = 'Story'; $('storyViewerContent').append(img); }
+  if (story.text) { const caption = document.createElement('p'); caption.textContent = story.text; $('storyViewerContent').append(caption); }
+  $('storyProgress').innerHTML = activeStoryItems.map((_,i) => `<span class="${i <= activeStoryIndex ? 'done' : ''}"></span>`).join('');
+  $('storyNextBtn').textContent = activeStoryIndex === activeStoryItems.length - 1 ? 'বন্ধ করুন' : 'পরবর্তী ›';
+  try {
+    const viewerRef = doc(db, 'stories', story.id, 'viewers', state.user.uid);
+    const existing = await getDoc(viewerRef);
+    if (!existing.exists() && story.uid !== state.user.uid) {
+      await setDoc(viewerRef, { uid: state.user.uid, name: state.user.displayName || state.user.email || 'ব্যবহারকারী', viewedAt: serverTimestamp() });
+    }
+    if (story.uid === state.user.uid) {
+      const viewers = await getDocs(collection(db, 'stories', story.id, 'viewers'));
+      const viewerNames = viewers.docs.map(view => view.data().name || 'ব্যবহারকারী');
+      $('storyViewCount').textContent = viewers.size ? `দেখেছেন ${viewers.size} জন: ${viewerNames.join(', ')}` : 'এখনো কেউ দেখেনি';
+    } else $('storyViewCount').textContent = '';
+  } catch (error) { console.warn('Story view tracking:', error); }
+}
+
+$('storyImageFile')?.addEventListener('change', event => {
+  selectedStoryFile = event.target.files?.[0] || null;
+  const preview = $('storyImagePreview');
+  if (preview && selectedStoryFile) { preview.src = URL.createObjectURL(selectedStoryFile); preview.classList.remove('hidden'); }
+  else preview?.classList.add('hidden');
+});
+$('storyComposerClose')?.addEventListener('click', () => $('storyComposer')?.classList.add('hidden'));
+$('storyCloseBtn')?.addEventListener('click', () => $('storyViewer')?.classList.add('hidden'));
+$('storyNextBtn')?.addEventListener('click', () => { activeStoryIndex += 1; if (activeStoryIndex >= activeStoryItems.length) $('storyViewer')?.classList.add('hidden'); else showActiveStory(); });
+$('storyDeleteBtn')?.addEventListener('click', async () => {
+  const story = activeStoryItems[activeStoryIndex];
+  if (!story || story.uid !== state.user?.uid || !confirm('এই স্টোরিটি মুছে ফেলবেন?')) return;
+  try { await deleteDoc(doc(db, 'stories', story.id)); $('storyViewer')?.classList.add('hidden'); showToast('স্টোরি মুছে ফেলা হয়েছে।'); }
+  catch (error) { showToast(readableError(error)); }
+});
+$('storyForm')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const text = $('storyText').value.trim();
+  const file = selectedStoryFile;
+  if (!text && !file) { showToast('একটি ছবি অথবা কিছু লেখা যোগ করুন।'); return; }
+  const button = $('publishStoryBtn'); button.disabled = true;
+  try {
+    let imageURL = '';
+    if (file) { if (!file.type.startsWith('image/')) throw new Error('শুধু ছবি আপলোড করা যাবে।'); if (file.size > 10*1024*1024) throw new Error('ছবি ১০ MB-এর কম হতে হবে।'); imageURL = await uploadBondingImage(file); }
+    await addDoc(collection(db, 'stories'), {
+      uid: state.user.uid, name: state.user.displayName || state.user.email?.split('@')[0] || 'BONDING ব্যবহারকারী',
+      photoURL: state.user.photoURL || '', text, ...(imageURL ? { imageURL } : {}),
+      createdAt: serverTimestamp(), expiresAt: new Date(Date.now() + 24*60*60*1000)
+    });
+    $('storyText').value = ''; $('storyImageFile').value = ''; $('storyImagePreview').classList.add('hidden'); selectedStoryFile = null;
+    $('storyComposer').classList.add('hidden'); showToast('আপনার স্টোরি প্রকাশিত হয়েছে!');
+  } catch (error) { console.error('Publish story:', error); showToast(error.message || readableError(error)); }
+  finally { button.disabled = false; }
+});
+
+
 /* Restore settings */
 applyLanguage();
 applyTheme();
@@ -1775,6 +1897,7 @@ onAuthStateChanged(auth, async user => {
     if (state.unsubscribeMessages) state.unsubscribeMessages();
     if (state.unsubscribeChats) state.unsubscribeChats();
     if (state.unsubscribeFeed) state.unsubscribeFeed();
+    if (unsubscribeStories) unsubscribeStories();
 
     state.unsubscribeMessages = null;
     state.unsubscribeChats = null;
@@ -1799,6 +1922,7 @@ onAuthStateChanged(auth, async user => {
     });
     listenToChats(user);
     listenToFeed();
+    listenToStories();
     renderUserDirectory("friendsDirectory");
     renderUserDirectory("chatsDirectory");
     openPage("homePage");

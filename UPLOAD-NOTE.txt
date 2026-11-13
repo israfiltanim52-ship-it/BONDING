@@ -1,1 +1,2 @@
 BONDING Admin Dashboard build. Upload/replace files inside BONDING-main at repository root. Publish firestore.rules, then create system/adminConfig with superAdminUid set to the founder Firebase Auth UID. See SETUP-BN.txt. Existing user data is not deleted.
+Story System 1.0: Stories are public to all signed-in BONDING users, support image and text only, and are shown for 24 hours from creation. Publish the updated firestore.rules before testing Stories. Images use the existing Cloudinary image upload preset. Video Stories are intentionally not included in this release.

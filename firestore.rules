@@ -109,6 +109,32 @@ service cloud.firestore {
       }
     }
 
+    // Stories are visible to every authenticated BONDING user. Owners alone can delete them.
+    match /stories/{storyId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 500
+        && (!('imageURL' in request.resource.data) || request.resource.data.imageURL is string)
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.keys().hasOnly(['uid','name','photoURL','text','imageURL','createdAt','expiresAt']);
+      allow update: if false;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+      match /viewers/{viewerUid} {
+        allow create: if signedIn() && request.auth.uid == viewerUid
+          && viewerUid != get(/databases/$(database)/documents/stories/$(storyId)).data.uid
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.viewedAt is timestamp
+          && request.resource.data.keys().hasOnly(['uid','name','viewedAt']);
+        allow read: if signedIn()
+          && get(/databases/$(database)/documents/stories/$(storyId)).data.uid == request.auth.uid;
+        allow update, delete: if false;
+      }
+    }
+
     match /chats/{chatId} {
       allow create: if signedIn() && request.resource.data.members is list && request.resource.data.members.size() == 2
         && request.auth.uid in request.resource.data.members
