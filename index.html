@@ -181,25 +181,27 @@
 
       <!-- CHATS -->
       <section id="chatsPage" class="page">
-        <div class="page-heading">
-          <div>
-            <p class="eyebrow">YOUR CONVERSATIONS</p>
-            <h2 data-i18n="chats">চ্যাট</h2>
-          </div>
-          <div class="avatar small" id="chatAvatar">B</div>
-        </div>
-
-        <div class="section-heading">
-          <h3 data-i18n="yourChats">আপনার চ্যাট</h3>
-        </div>
-
-        <div id="chatList" class="chat-list">
-          <div class="empty-state" data-i18n="noChats">
-            এখনো কোনো চ্যাট নেই।
+        <div class="dm-heading">
+          <div><p class="eyebrow">BONDING DIRECT</p><h2>Messages</h2></div>
+          <div class="dm-heading-actions">
+            <button id="chatSearchFocus" class="dm-icon-btn" type="button" aria-label="Search chats">⌕</button>
+            <button id="newChatFocus" class="dm-icon-btn dm-compose-btn" type="button" aria-label="New message">✎</button>
           </div>
         </div>
-        <section class="panel directory-panel chat-directory-panel">
-          <div class="section-heading"><div><h3>নতুন চ্যাট শুরু করুন</h3><p class="muted">সব নিবন্ধিত ব্যবহারকারীর মধ্যে খুঁজুন।</p></div><button id="refreshChatsDirectory" class="outline-btn" type="button">রিফ্রেশ</button></div>
+        <div class="dm-search"><span aria-hidden="true">⌕</span><input id="chatListSearch" type="search" placeholder="চ্যাট বা বন্ধু খুঁজুন"></div>
+        <div class="dm-people-wrap">
+          <div class="dm-people-heading"><strong>বন্ধুরা</strong><span>সরাসরি চ্যাট শুরু করুন</span></div>
+          <div id="chatPeopleStrip" class="dm-people-strip"><div class="dm-person dm-person-note"><div class="dm-person-avatar">＋</div><small>Your note</small></div></div>
+        </div>
+        <div class="dm-tabs" role="tablist" aria-label="মেসেজ বিভাগ">
+          <button type="button" class="dm-tab active" data-chat-tab="messages">Messages</button>
+          <button type="button" class="dm-tab" data-chat-tab="channels">Channels</button>
+          <button type="button" class="dm-tab" data-chat-tab="requests">Requests</button>
+        </div>
+        <div id="chatList" class="chat-list dm-chat-list"><div class="empty-state" data-i18n="noChats">এখনো কোনো চ্যাট নেই।</div></div>
+        <div id="channelsPlaceholder" class="dm-placeholder hidden"><div class="dm-placeholder-icon">✦</div><strong>Channels</strong><p>চ্যানেল ফিচার পরবর্তী আপডেটে যুক্ত হবে।</p></div>
+        <section class="panel directory-panel chat-directory-panel" id="newChatDirectory">
+          <div class="section-heading"><div><h3>নতুন চ্যাট শুরু করুন</h3><p class="muted">BONDING-এর ব্যবহারকারীদের খুঁজুন।</p></div><button id="refreshChatsDirectory" class="outline-btn" type="button">রিফ্রেশ</button></div>
           <input id="chatsDirectorySearch" class="directory-search" type="search" placeholder="নাম বা ইমেইল দিয়ে খুঁজুন">
           <div id="chatsDirectory" class="social-list directory-list"><p class="muted">ব্যবহারকারী তালিকা লোড হচ্ছে…</p></div>
         </section>

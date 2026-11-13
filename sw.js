@@ -1,4 +1,4 @@
-const CACHE_NAME = "bonding-instagram-brand-v3";
+const CACHE_NAME = "bonding-instagram-brand-v4";
 const APP_SHELL = ["./", "./index.html", "./style.css", "./manifest.json", "./bonding-logo.svg", "./icon-192.png", "./icon-512.png"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).catch(() => {}));

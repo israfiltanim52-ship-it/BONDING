@@ -593,6 +593,34 @@ function listenToChats(user) {
         return tb - ta || a.name.localeCompare(b.name);
       });
 
+      // Populate the horizontal friend strip using real accepted-friend profiles.
+      const peopleStrip = $("chatPeopleStrip");
+      if (peopleStrip) {
+        const note = peopleStrip.querySelector(".dm-person-note");
+        peopleStrip.replaceChildren();
+        if (note) peopleStrip.append(note);
+        rows.slice(0, 20).forEach(peer => {
+          const person = document.createElement("button");
+          person.type = "button";
+          person.className = "dm-person";
+          const face = document.createElement("span");
+          face.className = "dm-person-avatar";
+          if (peer.photoURL) {
+            const image = document.createElement("img");
+            image.src = peer.photoURL;
+            image.alt = "";
+            face.append(image);
+          } else {
+            face.textContent = (peer.name || "বন্ধু").trim().charAt(0).toUpperCase();
+          }
+          const label = document.createElement("small");
+          label.textContent = peer.name;
+          person.append(face, label);
+          person.addEventListener("click", () => openConversation(peer));
+          peopleStrip.append(person);
+        });
+      }
+
       if (!rows.length) {
         lists.forEach(list => {
           const empty = document.createElement("div");
@@ -1599,6 +1627,25 @@ document.addEventListener("click", event => {
 applyColorTheme(savedColorTheme);
 $("tanimAiButton")?.addEventListener("click", () => $("tanimAiPanel")?.classList.toggle("hidden"));
 $("closeTanimAi")?.addEventListener("click", () => $("tanimAiPanel")?.classList.add("hidden"));
+
+// Chat inbox controls: search existing conversations and switch inbox tabs.
+$("chatSearchFocus")?.addEventListener("click", () => $("chatListSearch")?.focus());
+$("newChatFocus")?.addEventListener("click", () => $("newChatDirectory")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+$("chatListSearch")?.addEventListener("input", event => {
+  const term = event.target.value.trim().toLocaleLowerCase();
+  document.querySelectorAll("#chatList .chat-item").forEach(item => {
+    item.classList.toggle("hidden", term && !item.textContent.toLocaleLowerCase().includes(term));
+  });
+});
+document.querySelectorAll("[data-chat-tab]").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll("[data-chat-tab]").forEach(item => item.classList.toggle("active", item === tab));
+    const mode = tab.dataset.chatTab;
+    $("chatList")?.classList.toggle("hidden", mode !== "messages");
+    $("channelsPlaceholder")?.classList.toggle("hidden", mode !== "channels");
+    if (mode === "requests") openPage("friendsPage");
+  });
+});
 
 /* Restore settings */
 applyLanguage();

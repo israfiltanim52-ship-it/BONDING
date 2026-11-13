@@ -765,3 +765,47 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
   border-color:rgba(255,130,181,.24)!important;
 }
 .post-card input::placeholder,.post-card textarea::placeholder{color:#b998ad!important}
+
+/* BONDING Direct — Instagram-inspired chat inbox */
+#chatsPage .dm-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:4px 0 18px}
+#chatsPage .dm-heading h2{margin:0;color:#fff;font-size:27px;letter-spacing:-.7px}
+#chatsPage .dm-heading .eyebrow{color:#f36bb4}
+.dm-heading-actions{display:flex;gap:9px}
+.dm-icon-btn{width:42px;height:42px;border:1px solid rgba(255,115,184,.26);border-radius:15px;background:#251426;color:#ffd5e9;font-size:24px;display:grid;place-items:center}
+.dm-compose-btn{background:linear-gradient(135deg,#a92be0,#f02b91 65%,#ff765f);border:0;color:#fff;box-shadow:0 8px 20px rgba(221,39,146,.2)}
+.dm-search{height:44px;display:flex;align-items:center;gap:10px;padding:0 14px;border:1px solid rgba(255,124,184,.18);border-radius:15px;background:rgba(255,255,255,.07);color:#eab6d1;margin-bottom:20px}
+.dm-search span{font-size:22px;line-height:1}
+.dm-search input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#fff;font:inherit;font-size:13px}
+.dm-search input::placeholder{color:#bca2b4}
+.dm-people-wrap{margin:5px 0 21px}
+.dm-people-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.dm-people-heading strong{font-size:13px;color:#fff}
+.dm-people-heading span{font-size:10px;color:#c59ab4}
+.dm-people-strip{display:flex;gap:15px;overflow-x:auto;padding:2px 1px 8px;scrollbar-width:none}
+.dm-people-strip::-webkit-scrollbar{display:none}
+.dm-person{flex:0 0 62px;width:62px;display:flex;align-items:center;flex-direction:column;gap:6px;border:0;background:transparent;color:#f8eaf2;padding:0;cursor:pointer}
+.dm-person-avatar{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;overflow:hidden;background:linear-gradient(145deg,#a72cdb,#f02c91 65%,#ff805d);border:2px solid #ef4caa;color:white;font-size:19px;font-weight:800;position:relative}
+.dm-person-avatar img{width:100%;height:100%;object-fit:cover}
+.dm-person small{max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:#e6ccdc}
+.dm-person-note .dm-person-avatar{background:#2b1a2b;border:1px dashed #e15aa8;color:#ff9ccc;font-size:25px}
+.dm-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
+.dm-tab{border:0;border-radius:11px;padding:10px 6px;background:rgba(255,255,255,.08);color:#d8c1d2;font-weight:700;font-size:11px}
+.dm-tab.active{background:linear-gradient(110deg,#a72bdc,#e92a94);color:white;box-shadow:0 6px 16px rgba(218,40,151,.18)}
+.dm-chat-list{gap:0!important}
+.dm-chat-list .chat-item-v2{position:relative;min-height:78px;padding:12px 5px;border:0;border-bottom:1px solid rgba(255,133,188,.13);border-radius:0;background:transparent;box-shadow:none;color:#fff;gap:13px}
+.dm-chat-list .chat-item-v2:hover{transform:none;background:rgba(255,255,255,.045);border-color:rgba(255,133,188,.2)}
+.dm-chat-list .chat-list-avatar{width:51px;height:51px;flex-basis:51px;border-radius:50%;border:1.5px solid rgba(244,89,173,.65)}
+.dm-chat-list .chat-item-details{gap:5px}
+.dm-chat-list .chat-item-details strong{font-size:13px;color:#fff;font-weight:800}
+.dm-chat-list .chat-item-details small{font-size:11px;color:#c8b0c2}
+.dm-chat-list .chat-open-icon{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.07);color:#f3a0cc}
+.dm-chat-list .chat-open-icon svg{width:17px;height:17px}
+.dm-placeholder{text-align:center;padding:30px 15px;color:#fff;background:rgba(255,255,255,.045);border:1px solid rgba(255,125,185,.16);border-radius:18px}
+.dm-placeholder-icon{font-size:27px;color:#f36ab4;margin-bottom:8px}
+.dm-placeholder p{font-size:11px;color:#c6a9bd;margin:6px 0 0}
+#chatsPage .chat-directory-panel{margin-top:22px;background:rgba(34,20,37,.92);border-color:rgba(255,123,185,.2);box-shadow:none}
+#chatsPage .chat-directory-panel h3{color:#fff}
+#chatsPage .chat-directory-panel .muted{color:#c5a9bc}
+#chatsPage .chat-directory-panel .directory-search{background:#160e1b;color:#fff;border-color:rgba(255,123,185,.2)}
+#chatsPage .chat-directory-panel .directory-list .social-row{background:#26172a;border-color:rgba(255,123,185,.18);color:#fff}
+@media(max-width:520px){#chatsPage .dm-heading h2{font-size:25px}.dm-person{flex-basis:58px;width:58px}.dm-person-avatar{width:54px;height:54px}.dm-chat-list .chat-item-v2{min-height:74px}}
