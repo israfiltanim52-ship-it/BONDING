@@ -721,3 +721,47 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
  .topbar{padding-left:15px;padding-right:15px}
  .brand-name{font-size:17px}
 }
+
+
+/* BONDING feed cards — dark Instagram palette + readable author names */
+.post-card{
+  background:linear-gradient(145deg,#24152b 0%,#1d1424 58%,#291426 100%)!important;
+  border:1px solid rgba(255,126,183,.28)!important;
+  color:#fff7fc!important;
+  box-shadow:0 12px 30px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.035)!important;
+}
+.post-card .post-author strong{
+  color:#fff!important;
+  font-weight:800;
+  text-shadow:0 1px 8px rgba(225,48,138,.18);
+}
+.post-card .post-author small,
+.post-card .post-own-label{
+  color:#f3a9ce!important;
+}
+.post-card .post-body{
+  color:#fff0f7!important;
+}
+.post-card .post-stats{
+  color:#e8a9ca!important;
+  border-bottom-color:rgba(255,130,181,.22)!important;
+}
+.post-card .post-actions .post-action{
+  color:#e8b6d0!important;
+}
+.post-card .post-actions .post-action:hover,
+.post-card .post-actions .post-action.is-reacted{
+  color:#fff!important;
+  background:linear-gradient(110deg,rgba(167,44,226,.28),rgba(225,48,138,.24))!important;
+}
+.post-card .comments-panel{border-top-color:rgba(255,130,181,.22)!important}
+.post-card .comment-item{
+  background:rgba(255,255,255,.055)!important;
+  color:#fff0f7!important;
+  border:1px solid rgba(255,130,181,.14)!important;
+}
+.post-card input,.post-card textarea{
+  background:#160d1b!important;color:#fff!important;
+  border-color:rgba(255,130,181,.24)!important;
+}
+.post-card input::placeholder,.post-card textarea::placeholder{color:#b998ad!important}
