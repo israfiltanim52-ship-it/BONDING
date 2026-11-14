@@ -963,3 +963,34 @@ body,button,input,textarea,select{
 .ai-send-btn{background:#d62976;color:white}
 .ai-backend-note{display:block;margin-top:8px;color:var(--muted,#a9a1ad);font-size:.7rem;line-height:1.4}
 @media(max-width:520px){.community-card{padding:13px}.ai-chat-messages{max-height:230px}}
+
+
+/* BONDING 2.0 — UI refinement */
+.friends-tabs{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;
+  margin:16px 0 14px;padding:5px;border:1px solid var(--line);
+  border-radius:16px;background:var(--surface-2);
+}
+.friends-tab{
+  min-width:0;padding:10px 5px;border:0;border-radius:11px;
+  color:var(--muted);background:transparent;font-size:11px;font-weight:800;
+}
+.friends-tab.active{
+  color:#fff;background:linear-gradient(110deg,var(--green),var(--green-dark));
+  box-shadow:0 5px 14px rgba(22,132,90,.18);
+}
+.friends-tab-panel>.panel{margin-top:0}
+.new-chat-summary{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  cursor:pointer;list-style:none;
+}
+.new-chat-summary::-webkit-details-marker{display:none}
+.new-chat-summary>span:first-child{display:flex;flex-direction:column;gap:5px}
+.new-chat-summary strong{font-size:14px}
+.new-chat-summary small{font-size:11px}
+.chat-directory-panel[open] .new-chat-summary{padding-bottom:12px;border-bottom:1px solid var(--line)}
+.chat-directory-panel .section-heading{margin-top:14px}
+@media(max-width:520px){
+  .friends-tabs{gap:4px;padding:4px}
+  .friends-tab{font-size:10px;padding:10px 2px}
+}

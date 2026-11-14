@@ -135,27 +135,6 @@
         <div class="section-heading"><h3>সবার পোস্ট</h3><span class="muted">সাম্প্রতিক</span></div>
         <div id="feedList" class="feed-list"><div class="empty-state">নিউজফিড লোড হচ্ছে…</div></div>
 
-        <div class="section-heading">
-          <h3 data-i18n="recentChats">সাম্প্রতিক চ্যাট</h3>
-          <button class="text-btn" data-go="chatsPage"
-            data-i18n="seeAll">সব দেখুন</button>
-        </div>
-
-        <div id="homeRecent" class="chat-list">
-          <div class="empty-state" data-i18n="noChats">
-            এখনো কোনো চ্যাট নেই।
-          </div>
-        </div>
-
-        <div class="notice-card">
-          <span class="notice-icon">✦</span>
-          <div>
-            <strong data-i18n="comingSoon">কল ফিচার আসছে</strong>
-            <p data-i18n="comingDesc">
-              অডিও ও ভিডিও কল পরবর্তী ধাপে যুক্ত হবে।
-            </p>
-          </div>
-        </div>
       </section>
 
       <!-- FRIENDS -->
@@ -176,24 +155,37 @@
 
         <p id="searchMessage" class="status-message"></p>
         <div id="searchResults" class="search-results"></div>
-        <section class="panel directory-panel">
-          <div class="section-heading"><div><h3>সব ব্যবহারকারী</h3><p class="muted">BONDING-এ নিবন্ধিত অ্যাকাউন্টগুলো এখানে দেখুন।</p></div><button id="refreshFriendsDirectory" class="outline-btn" type="button">রিফ্রেশ</button></div>
-          <input id="friendsDirectorySearch" class="directory-search" type="search" placeholder="নাম বা ইমেইল দিয়ে খুঁজুন">
-          <div id="friendsDirectory" class="social-list directory-list"><p class="muted">ব্যবহারকারী তালিকা লোড হচ্ছে…</p></div>
-        </section>
-
-        <section class="panel social-panel">
-          <div class="section-heading"><h3>বন্ধুত্বের অনুরোধ</h3></div>
-          <div id="incomingRequests" class="social-list"><p class="muted">অনুরোধ লোড হচ্ছে…</p></div>
-        </section>
-        <section class="panel social-panel">
-          <div class="section-heading"><h3>পাঠানো অনুরোধ</h3></div>
-          <div id="outgoingRequests" class="social-list"><p class="muted">লোড হচ্ছে…</p></div>
-        </section>
-        <section class="panel social-panel">
-          <div class="section-heading"><h3>আমার বন্ধুরা</h3></div>
-          <div id="friendsList" class="social-list"><p class="muted">বন্ধুর তালিকা লোড হচ্ছে…</p></div>
-        </section>
+        <div class="friends-tabs" role="tablist" aria-label="বন্ধু বিভাগ">
+          <button type="button" class="friends-tab active" data-friends-tab="all" aria-selected="true">সব ব্যবহারকারী</button>
+          <button type="button" class="friends-tab" data-friends-tab="requests" aria-selected="false">অনুরোধ</button>
+          <button type="button" class="friends-tab" data-friends-tab="sent" aria-selected="false">পাঠানো</button>
+          <button type="button" class="friends-tab" data-friends-tab="friends" aria-selected="false">আমার বন্ধুরা</button>
+        </div>
+        <div id="friendsTabAll" class="friends-tab-panel">
+          <section class="panel directory-panel">
+            <div class="section-heading"><div><h3>সব ব্যবহারকারী</h3><p class="muted">BONDING-এ নিবন্ধিত অ্যাকাউন্টগুলো এখানে দেখুন।</p></div><button id="refreshFriendsDirectory" class="outline-btn" type="button">রিফ্রেশ</button></div>
+            <input id="friendsDirectorySearch" class="directory-search" type="search" placeholder="নাম বা ইমেইল দিয়ে খুঁজুন">
+            <div id="friendsDirectory" class="social-list directory-list"><p class="muted">ব্যবহারকারী তালিকা লোড হচ্ছে…</p></div>
+          </section>
+        </div>
+        <div id="friendsTabRequests" class="friends-tab-panel hidden">
+          <section class="panel social-panel">
+            <div class="section-heading"><h3>বন্ধুত্বের অনুরোধ</h3></div>
+            <div id="incomingRequests" class="social-list"><p class="muted">অনুরোধ লোড হচ্ছে…</p></div>
+          </section>
+        </div>
+        <div id="friendsTabSent" class="friends-tab-panel hidden">
+          <section class="panel social-panel">
+            <div class="section-heading"><h3>পাঠানো অনুরোধ</h3></div>
+            <div id="outgoingRequests" class="social-list"><p class="muted">লোড হচ্ছে…</p></div>
+          </section>
+        </div>
+        <div id="friendsTabFriends" class="friends-tab-panel hidden">
+          <section class="panel social-panel">
+            <div class="section-heading"><h3>আমার বন্ধুরা</h3></div>
+            <div id="friendsList" class="social-list"><p class="muted">বন্ধুর তালিকা লোড হচ্ছে…</p></div>
+          </section>
+        </div>
 
       </section>
 
@@ -225,22 +217,17 @@
           </div>
         </div>
         <div class="dm-search"><span aria-hidden="true">⌕</span><input id="chatListSearch" type="search" placeholder="চ্যাট বা বন্ধু খুঁজুন"></div>
-        <div class="dm-people-wrap">
-          <div class="dm-people-heading"><strong>বন্ধুরা</strong><span>সরাসরি চ্যাট শুরু করুন</span></div>
-          <div id="chatPeopleStrip" class="dm-people-strip"><div class="dm-person dm-person-note"><div class="dm-person-avatar">＋</div><small>Your note</small></div></div>
-        </div>
         <div class="dm-tabs" role="tablist" aria-label="মেসেজ বিভাগ">
-          <button type="button" class="dm-tab active" data-chat-tab="messages">Messages</button>
-          <button type="button" class="dm-tab" data-chat-tab="channels">Channels</button>
-          <button type="button" class="dm-tab" data-chat-tab="requests">Requests</button>
+          <button type="button" class="dm-tab active" data-chat-tab="messages">মেসেজ</button>
+          <button type="button" class="dm-tab" data-go="friendsPage">বন্ধুত্বের অনুরোধ</button>
         </div>
         <div id="chatList" class="chat-list dm-chat-list"><div class="empty-state" data-i18n="noChats">এখনো কোনো চ্যাট নেই।</div></div>
-        <div id="channelsPlaceholder" class="dm-placeholder hidden"><div class="dm-placeholder-icon">✦</div><strong>Channels</strong><p>চ্যানেল ফিচার পরবর্তী আপডেটে যুক্ত হবে।</p></div>
-        <section class="panel directory-panel chat-directory-panel" id="newChatDirectory">
-          <div class="section-heading"><div><h3>নতুন চ্যাট শুরু করুন</h3><p class="muted">BONDING-এর ব্যবহারকারীদের খুঁজুন।</p></div><button id="refreshChatsDirectory" class="outline-btn" type="button">রিফ্রেশ</button></div>
+        <details class="panel directory-panel chat-directory-panel" id="newChatDirectory">
+          <summary class="new-chat-summary"><span><strong>নতুন চ্যাট শুরু করুন</strong><small class="muted">BONDING-এর ব্যবহারকারীদের খুঁজুন।</small></span><span class="pill">খুলুন</span></summary>
+          <div class="section-heading"><div><h3>ব্যবহারকারী খুঁজুন</h3></div><button id="refreshChatsDirectory" class="outline-btn" type="button">রিফ্রেশ</button></div>
           <input id="chatsDirectorySearch" class="directory-search" type="search" placeholder="নাম বা ইমেইল দিয়ে খুঁজুন">
           <div id="chatsDirectory" class="social-list directory-list"><p class="muted">ব্যবহারকারী তালিকা লোড হচ্ছে…</p></div>
-        </section>
+        </details>
       </section>
 
       <!-- CONVERSATION -->
@@ -393,11 +380,11 @@
 
           <div class="setting-row">
             <div>
-              <strong data-i18n="appearance">থিম</strong>
-              <small data-i18n="appearanceDesc">কালো-নীল প্রিমিয়াম</small>
+              <strong>ডার্ক / লাইট মোড</strong>
+              <small>অ্যাপের উজ্জ্বল বা গাঢ় প্রদর্শন পরিবর্তন করুন</small>
             </div>
             <button id="themeToggle2" class="outline-btn"
-              type="button" data-i18n="change">পরিবর্তন</button>
+              type="button">মোড পরিবর্তন</button>
           </div>
 
           <div class="setting-row">

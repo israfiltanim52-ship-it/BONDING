@@ -588,7 +588,7 @@ function listenToChats(user) {
   );
 
   state.unsubscribeChats = onSnapshot(chatsQuery, async snapshot => {
-    const lists = [$("chatList"), $("homeRecent")].filter(Boolean);
+    const lists = [$("chatList")].filter(Boolean);
     for (const list of lists) list.replaceChildren();
 
     try {
@@ -1753,7 +1753,10 @@ $("closeTanimAi")?.addEventListener("click", () => $("tanimAiPanel")?.classList.
 
 // Chat inbox controls: search existing conversations and switch inbox tabs.
 $("chatSearchFocus")?.addEventListener("click", () => $("chatListSearch")?.focus());
-$("newChatFocus")?.addEventListener("click", () => $("newChatDirectory")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+$("newChatFocus")?.addEventListener("click", () => {
+  const directory = $("newChatDirectory");
+  if (directory) { directory.open = true; directory.scrollIntoView({ behavior: "smooth", block: "start" }); }
+});
 $("chatListSearch")?.addEventListener("input", event => {
   const term = event.target.value.trim().toLocaleLowerCase();
   document.querySelectorAll("#chatList .chat-item").forEach(item => {
@@ -1763,10 +1766,19 @@ $("chatListSearch")?.addEventListener("input", event => {
 document.querySelectorAll("[data-chat-tab]").forEach(tab => {
   tab.addEventListener("click", () => {
     document.querySelectorAll("[data-chat-tab]").forEach(item => item.classList.toggle("active", item === tab));
-    const mode = tab.dataset.chatTab;
-    $("chatList")?.classList.toggle("hidden", mode !== "messages");
-    $("channelsPlaceholder")?.classList.toggle("hidden", mode !== "channels");
-    if (mode === "requests") openPage("friendsPage");
+    $("chatList")?.classList.remove("hidden");
+  });
+});
+document.querySelectorAll("[data-friends-tab]").forEach(tab => {
+  tab.addEventListener("click", () => {
+    const key = tab.dataset.friendsTab;
+    document.querySelectorAll("[data-friends-tab]").forEach(item => {
+      const active = item === tab;
+      item.classList.toggle("active", active);
+      item.setAttribute("aria-selected", String(active));
+    });
+    document.querySelectorAll(".friends-tab-panel").forEach(panel => panel.classList.add("hidden"));
+    $("friendsTab" + key.charAt(0).toUpperCase() + key.slice(1))?.classList.remove("hidden");
   });
 });
 
