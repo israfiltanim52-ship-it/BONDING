@@ -1,12 +1,28 @@
-BONDING Admin Dashboard — প্রাথমিক সেটআপ
+BONDING 2.0 — সহজ সেটআপ
 
-১) ZIP Extract করে BONDING-main ফোল্ডারের ভেতরের ফাইলগুলো GitHub repository root-এ upload/replace করুন।
-২) Firebase Console → Firestore Database → Rules-এ ZIP-এর firestore.rules সম্পূর্ণ বসিয়ে Publish করুন।
-৩) Firebase Console → Authentication → Users-এ প্রতিষ্ঠাতা ইস্রাফিল তানিমের অ্যাকাউন্ট খুঁজে UID কপি করুন।
-৪) Firestore Database → Data → Start collection: system; Document ID: adminConfig; Field: superAdminUid (string); Value: প্রতিষ্ঠাতার UID। এই ধাপটি শুধু প্রজেক্ট মালিক করবেন।
-৫) অ্যাপ থেকে লগআউট/লগইন করুন; Settings-এ Admin Control Center দেখা যাবে। মোবাইলেও একইভাবে পরিচালনা করা যাবে।
-৬) Super Admin Dashboard → Admin নিয়োগ থেকে নিবন্ধিত ইমেইল দিয়ে Admin, Moderator বা Verification Manager নিয়োগ করুন।
+A. GitHub / Static App
+১) ZIP Extract করুন।
+২) BONDING-main ফোল্ডারের ভেতরের সব ফাইল ও netlify ফোল্ডার GitHub repository root-এ upload/replace করুন। শুধু ভেতরের ফাইলগুলো আপলোড করবেন, অতিরিক্ত BONDING-main ফোল্ডার নয়।
+৩) Firebase Console → Firestore Database → Rules-এ firestore.rules-এর সম্পূর্ণ লেখা বসিয়ে Publish করুন।
+৪) Firestore-এর system/adminConfig ডকুমেন্টে superAdminUid হিসেবে প্রতিষ্ঠাতার Authentication UID আছে কি না নিশ্চিত করুন। আগে থেকে থাকলে আবার তৈরি করবেন না।
+৫) Founder account-এ login করে Profile থেকে নিজের ছবি upload করুন। Gold Founder badge কেবল সঠিক Super Admin UID-তে দেখাবে।
 
-নিরাপত্তা: system/adminConfig ডকুমেন্টটি Firestore Rules দিয়ে client write থেকে বন্ধ। Founder UID ভুল দেবেন না। প্রথম Super Admin কেবল Firebase Console-এর মাধ্যমে সেট করতে হবে।
+B. Tanim AI চালু করা (Netlify Functions আবশ্যক)
+গুরুত্বপূর্ণ: GitHub Pages static hosting Netlify Function চালাতে পারে না। Tanim AI endpoint চালাতে Netlify-তে এই project deploy করতে হবে।
+১) Netlify-তে GitHub repository connect করে deploy করুন।
+২) Site configuration → Environment variables-এ যোগ করুন:
+   OPENAI_API_KEY = আপনার OpenAI API key
+   FIREBASE_SERVICE_ACCOUNT_JSON = Firebase Admin service account JSON-এর সম্পূর্ণ JSON string
+   OPENAI_MODEL = gpt-4.1-mini (ঐচ্ছিক; না দিলেও default ব্যবহার হবে)
+৩) Firebase Console/Google Cloud থেকে service account তৈরি করার আগে project owner-এর অনুমতি নিন। JSON key অত্যন্ত গোপন রাখুন; GitHub-এ আপলোড করবেন না।
+৪) Environment variables যোগ করার পর Netlify-তে নতুন deploy করুন।
+৫) লগইন করা BONDING account থেকে Tanim AI-তে text ও image পাঠিয়ে পরীক্ষা করুন।
+৬) OpenAI API ব্যবহার অনুযায়ী বিল হতে পারে; API key-তে billing/usage limit নির্ধারণ করুন।
 
-এই পর্যায়ে আছে: সদস্য তালিকা/সার্চ, পোস্ট মুছে moderation, ভেরিফিকেশন approve/reject, একাধিক admin role assign/revoke, admin action log। Auth account suspend/delete, reports workflow, comment moderation UI, analytics charts ও Cloud Functions এখনো পরবর্তী ধাপ।
+C. Communities
+- Firestore Rules publish হওয়ার পর Public/Private community তৈরি ও public group join পরীক্ষা করুন।
+- সাধারণ ব্যবহারকারী সর্বোচ্চ ৩টি community তৈরি করতে পারবেন।
+- Private group join request পাঠানো যায়; owner approval UI এই build-এ এখনো অসম্পূর্ণ।
+
+D. গুরুত্বপূর্ণ সীমাবদ্ধতা
+এই ZIP-এ Chat voice/typing/online, full report center, advanced analytics এবং সব group moderation workflow সম্পূর্ণ নয়। এগুলো চালু বলে ধরে নেবেন না। Tanim AI backend secrets যোগ ও Netlify deploy না করা পর্যন্ত AI live হবে না।

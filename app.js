@@ -58,7 +58,9 @@ const state = {
   adminRole: null,
   isSuperAdmin: false,
   adminUsersCache: [],
-  adminPostsCache: []
+  adminPostsCache: [],
+  currentCommunity: null,
+  founderUid: null
 };
 
 const translations = {
@@ -349,6 +351,7 @@ async function resetPassword() {
 }
 
 function openPage(pageId) {
+  if (pageId === "communitiesPage") renderCommunities();
   document.querySelectorAll(".page").forEach(page => {
     page.classList.toggle("active", page.id === pageId);
   });
@@ -1070,7 +1073,11 @@ async function loadMyProfile() {
       ? `linear-gradient(90deg,rgba(7,20,45,.18),rgba(7,20,45,.18)),url("${data.coverURL}")`
       : "";
   }
-  $("verifiedBadge")?.classList.toggle("hidden", data.verified !== true);
+  const badge = $("verifiedBadge");
+  if (badge) {
+    badge.classList.toggle("hidden", data.verified !== true && !state.isSuperAdmin);
+    badge.textContent = state.isSuperAdmin ? "★ Gold Founder" : (data.badgeType === "purple" ? "◆ Purple Official" : "✓ Blue Verified");
+  }
   if (data.verified === true) safeText($("verifyMessage"), "আপনার অ্যাকাউন্ট যাচাইকৃত।");
   else await loadVerificationStatus();
 }
@@ -1344,6 +1351,7 @@ async function loadAdminAccess() {
   try {
     const configSnap = await getDoc(doc(db, "system", "adminConfig"));
     const founderUid = configSnap.exists() ? configSnap.data().superAdminUid : "";
+    state.founderUid = founderUid || null;
     if (founderUid && founderUid === state.user.uid) {
       state.isSuperAdmin = true;
       state.adminRole = "superAdmin";
@@ -1526,7 +1534,11 @@ async function reviewVerification(uid, approve) {
       reviewedBy: state.user.uid,
       reviewedAt: serverTimestamp()
     }, {merge:true});
-    if (approve) await setDoc(doc(db,"users",uid),{verified:true,updatedAt:serverTimestamp()},{merge:true});
+    if (approve) {
+      const requestSnap = await getDoc(doc(db, "verificationRequests", uid));
+      const kind = requestSnap.exists() ? requestSnap.data().kind : "personal";
+      await setDoc(doc(db,"users",uid),{verified:true,badgeType:kind === "official" ? "purple" : "blue",updatedAt:serverTimestamp()},{merge:true});
+    }
     await writeAdminLog(approve ? "approve_verification" : "reject_verification",uid,action);
     showToast(`আবেদন ${approve ? "অনুমোদন" : "প্রত্যাখ্যান"} করা হয়েছে।`);
     await refreshAdminDashboard();
@@ -1604,7 +1616,8 @@ async function applyForVerification() {
     }
     await setDoc(ref,{
       uid:state.user.uid, name:state.user.displayName||state.user.email||"ব্যবহারকারী",
-      email:state.user.email||"", status:"pending", createdAt:serverTimestamp()
+      email:state.user.email||"", kind:$("verificationKind")?.value || "personal",
+      status:"pending", createdAt:serverTimestamp()
     });
     status($("verifyMessage"), "আবেদন জমা হয়েছে। অ্যাডমিন যাচাই করবেন।");
     $("verifyApplyBtn").disabled=true;
@@ -1876,6 +1889,220 @@ $('storyForm')?.addEventListener('submit', async event => {
     $('storyComposer').classList.add('hidden'); showToast('আপনার স্টোরি প্রকাশিত হয়েছে!');
   } catch (error) { console.error('Publish story:', error); showToast(error.message || readableError(error)); }
   finally { button.disabled = false; }
+});
+
+
+
+
+/* BONDING 2.0 — Communities */
+async function renderCommunities() {
+  const host = $("communitiesList");
+  if (!host || !state.user) return;
+  host.innerHTML = '<div class="empty-state">কমিউনিটি লোড হচ্ছে…</div>';
+  try {
+    const snap = await getDocs(query(collection(db, "communities"), orderBy("createdAt", "desc"), limit(60)));
+    host.replaceChildren();
+    if (snap.empty) {
+      host.innerHTML = '<div class="empty-state">এখনো কোনো কমিউনিটি নেই। প্রথম কমিউনিটি তৈরি করুন।</div>';
+      return;
+    }
+    for (const item of snap.docs) {
+      const group = { id: item.id, ...item.data() };
+      const memberSnap = await getDoc(doc(db, "communities", group.id, "members", state.user.uid));
+      const requestSnap = await getDoc(doc(db, "communities", group.id, "joinRequests", state.user.uid));
+      const memberCountSnap = await getDocs(collection(db, "communities", group.id, "members"));
+      const card = document.createElement("article");
+      card.className = "community-card";
+      const head = document.createElement("div"); head.className = "community-card-head";
+      const titleWrap = document.createElement("div");
+      const title = document.createElement("h3"); title.textContent = group.name || "নামহীন কমিউনিটি";
+      const meta = document.createElement("div"); meta.className = "community-meta";
+      meta.textContent = `${group.ownerName || "সদস্য"} • ${memberCountSnap.size} সদস্য`;
+      titleWrap.append(title, meta);
+      const privacy = document.createElement("span"); privacy.className = "community-privacy";
+      privacy.textContent = group.privacy === "private" ? "PRIVATE" : "PUBLIC";
+      head.append(titleWrap, privacy);
+      const desc = document.createElement("p"); desc.textContent = group.description || "এই কমিউনিটির কোনো বিবরণ নেই।";
+      const actions = document.createElement("div"); actions.className = "community-actions";
+      if (memberSnap.exists()) {
+        const joined = document.createElement("span"); joined.className = "community-meta"; joined.textContent = "✓ আপনি সদস্য";
+        const open = document.createElement("button"); open.type = "button"; open.className = "outline-btn"; open.textContent = "কমিউনিটি খুলুন";
+        open.addEventListener("click", () => openCommunity(group));
+        actions.append(joined, open);
+      } else if (requestSnap.exists()) {
+        const pending = document.createElement("span"); pending.className = "community-meta"; pending.textContent = "যোগদানের অনুরোধ অপেক্ষমাণ";
+        actions.append(pending);
+      } else {
+        const join = document.createElement("button"); join.type = "button"; join.className = "primary-btn";
+        join.textContent = group.privacy === "private" ? "যোগদানের অনুরোধ" : "যোগ দিন";
+        join.addEventListener("click", async () => {
+          join.disabled = true;
+          try {
+            if (group.privacy === "private") {
+              await setDoc(doc(db, "communities", group.id, "joinRequests", state.user.uid), {
+                uid: state.user.uid, name: state.user.displayName || state.user.email || "সদস্য", createdAt: serverTimestamp()
+              });
+              showToast("যোগদানের অনুরোধ পাঠানো হয়েছে।");
+            } else {
+              await setDoc(doc(db, "communities", group.id, "members", state.user.uid), {
+                uid: state.user.uid, name: state.user.displayName || state.user.email || "সদস্য", role: "member", joinedAt: serverTimestamp()
+              });
+              showToast("কমিউনিটিতে যোগ দিয়েছেন।");
+            }
+            await renderCommunities();
+          } catch (error) { showToast(readableError(error)); join.disabled = false; }
+        });
+        actions.append(join);
+      }
+      if (group.ownerUid === state.user.uid) {
+        const own = document.createElement("span"); own.className = "community-meta"; own.textContent = "আপনার তৈরি";
+        actions.append(own);
+      }
+      card.append(head, desc, actions); host.append(card);
+    }
+  } catch (error) {
+    console.error("Community load:", error);
+    host.innerHTML = '<div class="empty-state">কমিউনিটি লোড করা যায়নি। নতুন Firestore Rules Publish হয়েছে কি না পরীক্ষা করুন।</div>';
+  }
+}
+
+$("communityForm")?.addEventListener("submit", async event => {
+  event.preventDefault();
+  if (!state.user) return;
+  const name = $("communityName").value.trim();
+  const description = $("communityDescription").value.trim();
+  const privacy = $("communityPrivacy").value;
+  if (name.length < 3) return status($("communityMessage"), "কমিউনিটির নাম কমপক্ষে ৩ অক্ষরের হতে হবে।", true);
+  const button = $("createCommunityBtn"); button.disabled = true;
+  try {
+    const mine = await getDocs(query(collection(db, "communities"), where("ownerUid", "==", state.user.uid)));
+    if (!state.isSuperAdmin && mine.size >= 3) throw new Error("সাধারণ সদস্য সর্বোচ্চ ৩টি কমিউনিটি তৈরি করতে পারবেন।");
+    const ref = await addDoc(collection(db, "communities"), {
+      name, description, privacy, ownerUid: state.user.uid,
+      ownerName: state.user.displayName || state.user.email || "সদস্য",
+      memberCount: 1, createdAt: serverTimestamp(), status: "active"
+    });
+    await setDoc(doc(db, "communities", ref.id, "members", state.user.uid), {
+      uid: state.user.uid, name: state.user.displayName || state.user.email || "সদস্য",
+      role: "owner", joinedAt: serverTimestamp()
+    });
+    $("communityForm").reset();
+    status($("communityMessage"), "কমিউনিটি তৈরি হয়েছে।");
+    await renderCommunities();
+  } catch (error) { status($("communityMessage"), error.message || readableError(error), true); }
+  finally { button.disabled = false; }
+});
+$("refreshCommunities")?.addEventListener("click", renderCommunities);
+
+/* Founder profile image follows the founder's own profile photo; identity remains rule-controlled. */
+const originalLoadMyProfile = loadMyProfile;
+loadMyProfile = async function() {
+  await originalLoadMyProfile();
+  const founderAvatar = $("founderPublicAvatar");
+  if (state.founderUid) {
+    const founderSnap = await getDoc(doc(db, "users", state.founderUid));
+    const photoURL = founderSnap.exists() ? founderSnap.data().photoURL : "";
+    if (founderAvatar && photoURL) {
+      const img = document.createElement("img"); img.src = photoURL; img.alt = "Founder profile photo";
+      founderAvatar.replaceChildren(img);
+    } else if (founderAvatar) founderAvatar.textContent = "IT";
+  }
+  if (state.isSuperAdmin) $("verifiedBadge")?.classList.remove("hidden");
+};
+
+
+async function openCommunity(group) {
+  state.currentCommunity = group;
+  $("communityDetailTitle").textContent = group.name || "কমিউনিটি";
+  $("communityDetailMeta").textContent = `${group.privacy === "private" ? "Private" : "Public"} • ${group.ownerName || ""}`;
+  $("communityDetailModal").classList.remove("hidden");
+  await renderCommunityPosts();
+}
+async function renderCommunityPosts() {
+  const host = $("communityPosts"), group = state.currentCommunity;
+  if (!host || !group) return;
+  host.innerHTML = '<p class="muted">পোস্ট লোড হচ্ছে…</p>';
+  try {
+    const snap = await getDocs(query(collection(db, "communities", group.id, "posts"), orderBy("createdAt", "desc"), limit(40)));
+    host.replaceChildren();
+    if (snap.empty) { host.innerHTML = '<p class="muted">এখনো কোনো পোস্ট নেই। প্রথম পোস্টটি করুন।</p>'; return; }
+    for (const d of snap.docs) {
+      const post = d.data(), card = document.createElement("article"); card.className = "community-card";
+      const author = document.createElement("strong"); author.textContent = post.name || "সদস্য";
+      const body = document.createElement("p"); body.textContent = post.text || "";
+      card.append(author);
+      if (post.imageURL) { const img = document.createElement("img"); img.src = post.imageURL; img.alt = "কমিউনিটি পোস্ট"; img.loading = "lazy"; img.style.cssText = "width:100%;border-radius:12px;margin-top:8px"; card.append(img); }
+      if (post.text) card.append(body);
+      const actions = document.createElement("div"); actions.className = "community-actions";
+      const like = document.createElement("button"); like.type = "button"; like.className = "outline-btn"; like.textContent = "♡ লাইক";
+      like.addEventListener("click", async () => {
+        const ref = doc(db, "communities", group.id, "posts", d.id, "likes", state.user.uid);
+        try { const liked = await getDoc(ref); if (liked.exists()) await deleteDoc(ref); else await setDoc(ref,{uid:state.user.uid,createdAt:serverTimestamp()}); like.textContent = liked.exists() ? "♡ লাইক" : "♥ লাইক"; }
+        catch (error) { showToast(readableError(error)); }
+      });
+      const share = document.createElement("button"); share.type = "button"; share.className = "outline-btn"; share.textContent = "শেয়ার";
+      share.addEventListener("click", async () => { try { await navigator.clipboard.writeText(`${location.origin}${location.pathname}#community-${group.id}`); showToast("লিংক কপি হয়েছে।"); } catch { showToast("এই ব্রাউজারে কপি করা যায়নি।"); } });
+      actions.append(like, share); card.append(actions); host.append(card);
+    }
+  } catch (error) { host.textContent = "পোস্ট লোড করা যায়নি: " + readableError(error); }
+}
+$("communityPostForm")?.addEventListener("submit", async event => {
+  event.preventDefault();
+  const group = state.currentCommunity, text = $("communityPostText").value.trim(), file = $("communityPostImage").files?.[0];
+  if (!group || (!text && !file)) return;
+  const btn = $("communityPostSubmit"); btn.disabled = true;
+  try {
+    let imageURL = "";
+    if (file) { if (!file.type.startsWith("image/") || file.size > 10*1024*1024) throw new Error("১০ MB-এর কম আকারের ছবি নির্বাচন করুন।"); imageURL = await uploadBondingImage(file); }
+    await addDoc(collection(db, "communities", group.id, "posts"), {
+      uid: state.user.uid, name: state.user.displayName || state.user.email || "সদস্য",
+      text, ...(imageURL ? {imageURL} : {}), createdAt: serverTimestamp()
+    });
+    $("communityPostText").value = ""; $("communityPostImage").value = "";
+    await renderCommunityPosts(); showToast("কমিউনিটিতে পোস্ট প্রকাশ হয়েছে।");
+  } catch (error) { showToast(error.message || readableError(error)); }
+  finally { btn.disabled = false; }
+});
+$("communityDetailClose")?.addEventListener("click", () => $("communityDetailModal").classList.add("hidden"));
+
+/* Tanim AI front-end. The API key stays on the server, never in this browser app. */
+const aiHistory = [];
+function addAiBubble(text, role) {
+  const host = $("tanimAiMessages"); if (!host) return;
+  const bubble = document.createElement("div"); bubble.className = `ai-bubble ${role === "user" ? "ai-user" : "ai-assistant"}`;
+  bubble.textContent = text; host.append(bubble); host.scrollTop = host.scrollHeight;
+}
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file);
+  });
+}
+$("tanimAiButton")?.addEventListener("click", () => $("tanimAiPanel")?.classList.toggle("hidden"));
+$("closeTanimAi")?.addEventListener("click", () => $("tanimAiPanel")?.classList.add("hidden"));
+$("tanimAiForm")?.addEventListener("submit", async event => {
+  event.preventDefault();
+  const input = $("tanimAiInput"), fileInput = $("tanimAiImage");
+  const message = input.value.trim(), file = fileInput.files?.[0];
+  if (!message && !file) return;
+  if (file && (!file.type.startsWith("image/") || file.size > 4 * 1024 * 1024)) return showToast("৪ MB-এর কম আকারের ছবি নির্বাচন করুন।");
+  if (message) addAiBubble(message, "user");
+  else addAiBubble("একটি ছবি বিশ্লেষণ করুন", "user");
+  input.value = ""; const send = $("tanimAiForm").querySelector("button"); send.disabled = true;
+  try {
+    const payload = { message, history: aiHistory.slice(-12) };
+    if (file) payload.image = await fileToDataUrl(file);
+    const idToken = await state.user.getIdToken();
+    const response = await fetch("/.netlify/functions/tanim-ai", {
+      method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` }, body: JSON.stringify(payload)
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "AI সার্ভারের সঙ্গে সংযোগ করা যায়নি।");
+    const answer = data.reply || "দুঃখিত, উত্তর পাওয়া যায়নি।";
+    addAiBubble(answer, "assistant");
+    aiHistory.push({ role: "user", content: message || "ছবি বিশ্লেষণ করুন" }, { role: "assistant", content: answer });
+  } catch (error) {
+    addAiBubble(error.message.includes("Failed to fetch") ? "Tanim AI সার্ভার এখনো প্রকাশ করা হয়নি। Netlify-এ Function deploy এবং OPENAI_API_KEY সেট করতে হবে।" : error.message, "assistant");
+  } finally { send.disabled = false; fileInput.value = ""; }
 });
 
 

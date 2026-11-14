@@ -52,8 +52,9 @@ service cloud.firestore {
       allow update: if (signedIn() && request.auth.uid == userId
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','email','bio','photoURL','coverURL','updatedAt']))
-        || (signedIn() && canReviewVerification() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['verified','updatedAt'])
-        && request.resource.data.verified == true);
+        || (signedIn() && canReviewVerification() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['verified','badgeType','updatedAt'])
+        && request.resource.data.verified == true
+        && request.resource.data.badgeType in ['blue','purple']);
       allow delete: if false;
     }
 
@@ -73,7 +74,8 @@ service cloud.firestore {
       allow read: if signedIn() && (request.auth.uid == userId || canReviewVerification());
       allow create: if signedIn() && request.auth.uid == userId && request.resource.data.uid == userId
         && request.resource.data.status == 'pending'
-        && request.resource.data.keys().hasOnly(['uid','name','email','status','createdAt']);
+        && (!('kind' in request.resource.data) || request.resource.data.kind in ['personal','official'])
+        && request.resource.data.keys().hasOnly(['uid','name','email','kind','status','createdAt']);
       allow update: if (signedIn() && request.auth.uid == userId && resource.data.status == 'rejected'
         && request.resource.data.status == 'pending'
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','createdAt']))
@@ -159,5 +161,98 @@ service cloud.firestore {
         allow delete: if false;
       }
     }
+
+    // BONDING 2.0 Communities. Membership and ownership are checked by Firestore Rules.
+    match /communities/{communityId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 3
+        && request.resource.data.name.size() <= 60
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 500
+        && request.resource.data.privacy in ['public','private']
+        && request.resource.data.status == 'active'
+        && request.resource.data.memberCount == 1
+        && request.resource.data.keys().hasOnly(['name','description','privacy','ownerUid','ownerName','memberCount','createdAt','status']);
+      allow update: if signedIn() && (
+        resource.data.ownerUid == request.auth.uid
+        || isSuperAdmin()
+        || hasRole('admin')
+        || hasRole('moderator')
+      ) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','description','privacy','status','memberCount']);
+      allow delete: if signedIn() && (resource.data.ownerUid == request.auth.uid || isSuperAdmin() || hasRole('admin'));
+      match /members/{memberUid} {
+        allow read: if signedIn();
+        allow create: if (
+          signedIn() && request.auth.uid == memberUid
+          && request.resource.data.uid == memberUid
+          && request.resource.data.name is string
+          && request.resource.data.role == 'member'
+          && request.resource.data.keys().hasOnly(['uid','name','role','joinedAt'])
+          && get(/databases/$(database)/documents/communities/$(communityId)).data.privacy == 'public'
+        ) || (
+          signedIn() && request.auth.uid == memberUid
+          && request.resource.data.uid == memberUid
+          && request.resource.data.name is string
+          && request.resource.data.role == 'owner'
+          && request.resource.data.keys().hasOnly(['uid','name','role','joinedAt'])
+          && get(/databases/$(database)/documents/communities/$(communityId)).data.ownerUid == request.auth.uid
+        );
+        allow update: if signedIn() && (
+          get(/databases/$(database)/documents/communities/$(communityId)).data.ownerUid == request.auth.uid
+          || isSuperAdmin() || hasRole('admin') || hasRole('moderator')
+        );
+        allow delete: if signedIn() && (
+          request.auth.uid == memberUid
+          || get(/databases/$(database)/documents/communities/$(communityId)).data.ownerUid == request.auth.uid
+          || isSuperAdmin() || hasRole('admin') || hasRole('moderator')
+        );
+      }
+      match /joinRequests/{requestUid} {
+        allow create: if signedIn() && request.auth.uid == requestUid
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.name is string
+          && request.resource.data.keys().hasOnly(['uid','name','createdAt'])
+          && get(/databases/$(database)/documents/communities/$(communityId)).data.privacy == 'private';
+        allow read: if signedIn() && (
+          request.auth.uid == requestUid
+          || get(/databases/$(database)/documents/communities/$(communityId)).data.ownerUid == request.auth.uid
+          || isSuperAdmin() || hasRole('admin') || hasRole('moderator')
+        );
+        allow update, delete: if signedIn() && (
+          get(/databases/$(database)/documents/communities/$(communityId)).data.ownerUid == request.auth.uid
+          || isSuperAdmin() || hasRole('admin') || hasRole('moderator')
+        );
+      }
+      match /posts/{postId} {
+        allow read: if signedIn() && exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid));
+        allow create: if signedIn()
+          && exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid))
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.name is string
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 3000
+          && request.resource.data.keys().hasOnly(['uid','name','text','imageURL','createdAt'])
+          && (!('imageURL' in request.resource.data) || request.resource.data.imageURL is string);
+        allow update: if false;
+        allow delete: if signedIn() && (
+          resource.data.uid == request.auth.uid
+          || get(/databases/$(database)/documents/communities/$(communityId)).data.ownerUid == request.auth.uid
+          || isSuperAdmin() || hasRole('admin') || hasRole('moderator')
+        );
+        match /likes/{likeUid} {
+          allow read: if signedIn() && exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid));
+          allow create: if signedIn() && request.auth.uid == likeUid
+            && request.resource.data.uid == request.auth.uid
+            && request.resource.data.keys().hasOnly(['uid','createdAt'])
+            && exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid));
+          allow delete: if signedIn() && request.auth.uid == likeUid;
+          allow update: if false;
+        }
+      }
+    }
+
   }
 }

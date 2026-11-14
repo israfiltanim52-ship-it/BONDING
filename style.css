@@ -936,3 +936,30 @@ body,button,input,textarea,select{
 .story-viewer-foot{display:flex;align-items:center;justify-content:space-between;padding:12px;color:#d9c6d9;font-size:11px}
 .story-composer-card{width:min(480px,100%);padding:20px;border-radius:22px;background:#1b1020;border:1px solid rgba(255,91,165,.35);color:#fff;box-shadow:0 25px 80px rgba(0,0,0,.5)}
 .story-composer-card .section-heading{display:flex;align-items:center;justify-content:space-between}.story-composer-card textarea{width:100%;resize:vertical;background:#100b15;color:#fff;border:1px solid rgba(255,91,165,.35);border-radius:14px;padding:13px;font:inherit;min-height:100px}.story-composer-card textarea::placeholder{color:#b99bb8}.story-composer-card .muted{color:#c4afc4;font-size:11px}.story-composer-card .media-pick-btn{display:inline-flex;margin:12px 0;background:linear-gradient(110deg,#9c24df,#ff4e80);color:#fff;border-radius:12px;padding:10px 13px}.story-image-preview{display:block;max-width:100%;max-height:220px;object-fit:contain;border-radius:12px;margin:8px 0}.story-composer-card .primary-btn{background:linear-gradient(110deg,#9c24df,#ff4e80);box-shadow:0 8px 20px rgba(255,45,139,.2)}
+
+
+
+/* BONDING 2.0 — communities, founder identity and AI chat */
+.community-list{display:grid;gap:12px;margin-bottom:28px}
+.community-card{padding:16px;border:1px solid var(--line,rgba(255,255,255,.12));border-radius:18px;background:var(--panel,rgba(255,255,255,.04))}
+.community-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.community-card h3{margin:0 0 5px;font-size:1rem}
+.community-card p{margin:7px 0;color:var(--muted,#a9a1ad);font-size:.9rem;line-height:1.5}
+.community-meta{font-size:.78rem;color:var(--muted,#a9a1ad)}
+.community-privacy{font-size:.72rem;padding:5px 9px;border-radius:999px;background:rgba(214,41,118,.13);color:#f28ab8;white-space:nowrap}
+.community-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.community-actions button{font:inherit}
+.founder-gold-badge{display:inline-flex;align-items:center;gap:3px;margin-left:5px;padding:3px 7px;border-radius:999px;background:linear-gradient(110deg,#f9dc86,#c58a20);color:#392300;font-size:.62rem;vertical-align:middle}
+.founder-public-card .developer-avatar{overflow:hidden;background:linear-gradient(135deg,#f9dc86,#b87919);color:#3a2604}
+.founder-public-card .developer-avatar img{width:100%;height:100%;object-fit:cover}
+.ai-chat-messages{display:flex;flex-direction:column;gap:9px;max-height:270px;overflow:auto;padding:12px 2px}
+.ai-bubble{max-width:88%;padding:10px 13px;border-radius:15px;white-space:pre-wrap;line-height:1.5;font-size:.9rem}
+.ai-assistant{align-self:flex-start;background:rgba(255,255,255,.09)}
+.ai-user{align-self:flex-end;background:linear-gradient(120deg,#d62976,#8e36c9);color:white}
+.ai-chat-form{display:flex;align-items:center;gap:7px;padding-top:9px;border-top:1px solid rgba(255,255,255,.12)}
+.ai-chat-form input[type=text],.ai-chat-form input:not([type]){min-width:0;flex:1}
+.ai-chat-form #tanimAiInput{flex:1;min-width:0;border:1px solid rgba(255,255,255,.15);border-radius:999px;background:rgba(255,255,255,.07);color:inherit;padding:11px 13px}
+.ai-attach-btn,.ai-send-btn{display:grid;place-items:center;width:38px;height:38px;border:0;border-radius:50%;background:rgba(214,41,118,.2);color:inherit;cursor:pointer;font-size:1.2rem}
+.ai-send-btn{background:#d62976;color:white}
+.ai-backend-note{display:block;margin-top:8px;color:var(--muted,#a9a1ad);font-size:.7rem;line-height:1.4}
+@media(max-width:520px){.community-card{padding:13px}.ai-chat-messages{max-height:230px}}
