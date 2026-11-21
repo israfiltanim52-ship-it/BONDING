@@ -7,17 +7,17 @@ A. GitHub / Static App
 ৪) Firestore-এর system/adminConfig ডকুমেন্টে superAdminUid হিসেবে প্রতিষ্ঠাতার Authentication UID আছে কি না নিশ্চিত করুন। আগে থেকে থাকলে আবার তৈরি করবেন না।
 ৫) Founder account-এ login করে Profile থেকে নিজের ছবি upload করুন। Gold Founder badge কেবল সঠিক Super Admin UID-তে দেখাবে।
 
-B. Tanim AI চালু করা (Netlify Functions আবশ্যক)
+B. Tanim AI চালু করা (এই ZIP-এ netlify/functions/tanim-ai.mjs যোগ করা হয়েছে; Netlify Functions আবশ্যক)
 গুরুত্বপূর্ণ: GitHub Pages static hosting Netlify Function চালাতে পারে না। Tanim AI endpoint চালাতে Netlify-তে এই project deploy করতে হবে।
 ১) Netlify-তে GitHub repository connect করে deploy করুন।
 ২) Site configuration → Environment variables-এ যোগ করুন:
-   OPENAI_API_KEY = আপনার OpenAI API key
+   GEMINI_API_KEY = Google AI Studio থেকে তৈরি Gemini API key
    FIREBASE_SERVICE_ACCOUNT_JSON = Firebase Admin service account JSON-এর সম্পূর্ণ JSON string
-   OPENAI_MODEL = gpt-4.1-mini (ঐচ্ছিক; না দিলেও default ব্যবহার হবে)
+   GEMINI_MODEL = gemini-2.5-flash (ঐচ্ছিক; না দিলেও default ব্যবহার হবে)
 ৩) Firebase Console/Google Cloud থেকে service account তৈরি করার আগে project owner-এর অনুমতি নিন। JSON key অত্যন্ত গোপন রাখুন; GitHub-এ আপলোড করবেন না।
 ৪) Environment variables যোগ করার পর Netlify-তে নতুন deploy করুন।
 ৫) লগইন করা BONDING account থেকে Tanim AI-তে text ও image পাঠিয়ে পরীক্ষা করুন।
-৬) OpenAI API ব্যবহার অনুযায়ী বিল হতে পারে; API key-তে billing/usage limit নির্ধারণ করুন।
+৬) Gemini-এর ফ্রি tier ও rate limit প্রযোজ্য; সীমা/মডেল availability Google পরিবর্তন করতে পারে। Free tier-এ পাঠানো content Google-এর product improvement-এ ব্যবহৃত হতে পারে—ব্যক্তিগত/গোপন তথ্য পাঠাবেন না।
 
 C. Communities
 - Firestore Rules publish হওয়ার পর Public/Private community তৈরি ও public group join পরীক্ষা করুন।

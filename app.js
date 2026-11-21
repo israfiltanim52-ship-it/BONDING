@@ -2113,7 +2113,7 @@ $("tanimAiForm")?.addEventListener("submit", async event => {
     addAiBubble(answer, "assistant");
     aiHistory.push({ role: "user", content: message || "ছবি বিশ্লেষণ করুন" }, { role: "assistant", content: answer });
   } catch (error) {
-    addAiBubble(error.message.includes("Failed to fetch") ? "Tanim AI সার্ভার এখনো প্রকাশ করা হয়নি। Netlify-এ Function deploy এবং OPENAI_API_KEY সেট করতে হবে।" : error.message, "assistant");
+    addAiBubble(error.message.includes("Failed to fetch") ? "Tanim AI সার্ভার এখনো প্রকাশ করা হয়নি। Netlify-এ Function deploy এবং GEMINI_API_KEY ও Firebase server setup করতে হবে।" : error.message, "assistant");
   } finally { send.disabled = false; fileInput.value = ""; }
 });
 

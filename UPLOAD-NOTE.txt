@@ -2,5 +2,5 @@ BONDING 2.0 Foundation Build.
 - Publish firestore.rules before testing Communities and Verification.
 - Founder Gold badge requires system/adminConfig.superAdminUid to equal the founder Firebase Auth UID.
 - Founder photo is loaded from the founder's own profile photo.
-- Tanim AI requires Netlify Functions plus server-side OPENAI_API_KEY and FIREBASE_SERVICE_ACCOUNT_JSON environment variables. Never commit these secrets.
+- Tanim AI requires Netlify Functions plus server-side GEMINI_API_KEY and FIREBASE_SERVICE_ACCOUNT_JSON environment variables. Never commit these secrets.
 - Existing data is retained. See README-BN.md and SETUP-BN.txt for feature status and setup.
